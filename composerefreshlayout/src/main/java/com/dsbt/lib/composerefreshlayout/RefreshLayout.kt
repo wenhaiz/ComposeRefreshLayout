@@ -9,16 +9,9 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -38,7 +31,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -389,75 +381,4 @@ fun RefreshLayout(
             content(state)
         }
     }
-}
-
-
-@Composable
-fun DefaultRefreshHeader(state: RefreshLayoutState) {
-    val heightDp = 80.dp
-    var text by remember {
-        mutableStateOf("")
-    }
-    val newText = when {
-        state.isRefreshing.state == State.Resetting -> ""
-        (state.isRefreshing.state == State.IDLE || state.isRefreshing.state == State.Dragging) && !state.isRefreshing.hasMoreData -> "没有更多数据了"
-        state.isRefreshing.state == State.InProgress -> "正在刷新"
-        state.isRefreshing.state == State.Success -> "刷新成功"
-        state.isRefreshing.state == State.Failed -> "刷新失败"
-        state.isRefreshing.state == State.ReadyForAction -> "松开刷新"
-        else -> "下拉可以刷新"
-    }
-    if (newText.isNotEmpty()) {
-        text = newText
-    }
-    Box(
-        modifier = Modifier
-            .height(heightDp)
-            .fillMaxWidth()
-    ) {
-        Text(text = text, modifier = Modifier.align(Alignment.Center))
-    }
-}
-
-@Composable
-fun DefaultRefreshFooter(state: RefreshLayoutState) {
-    val heightDp = 80.dp
-    var text by remember {
-        mutableStateOf("")
-    }
-    val newText = when {
-        state.isLoadingMore.state == State.Resetting -> ""
-        (state.isLoadingMore.state == State.IDLE || state.isLoadingMore.state == State.Dragging) && !state.isLoadingMore.hasMoreData -> "没有更多数据了"
-        state.isLoadingMore.state == State.InProgress -> "正在加载..."
-        state.isLoadingMore.state == State.Success -> "加载成功"
-        state.isLoadingMore.state == State.Failed -> "加载失败"
-        state.isLoadingMore.state == State.ReadyForAction -> "松开加载更多"
-        else -> "上滑加载更多"
-    }
-    if (newText.isNotEmpty()) {
-        text = newText
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(heightDp)
-    ) {
-        Row(
-            modifier = Modifier.align(Alignment.Center),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (state.isLoadingMore.state == State.InProgress) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .padding(end = 12.dp)
-                        .size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colors.primary
-                )
-            }
-            Text(text = text, modifier = Modifier)
-        }
-    }
-
 }
