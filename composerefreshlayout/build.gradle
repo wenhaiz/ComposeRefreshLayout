@@ -8,7 +8,7 @@ publishing {
         release(MavenPublication) {
             groupId = 'com.dsbt.lib'
             artifactId = 'composerefreshlayout'
-            version = '0.1.0-beta.1'
+            version = '0.1.0-beta.2'
 
             afterEvaluate {
                 from components.release
@@ -18,6 +18,11 @@ publishing {
 }
 
 android {
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
     namespace 'com.dsbt.lib.composerefreshlayout'
     compileSdk 33
 
