@@ -1,6 +1,20 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'maven-publish'
+}
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.dsbt.lib'
+            artifactId = 'composerefreshlayout'
+            version = '0.1.0-beta.1'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
 }
 
 android {
