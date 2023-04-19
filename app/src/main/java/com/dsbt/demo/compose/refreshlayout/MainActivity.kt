@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dsbt.demo.compose.refreshlayout.ui.theme.RefreshLayoutComposeTheme
+import com.dsbt.lib.composerefreshlayout.DefaultRefreshFooter
+import com.dsbt.lib.composerefreshlayout.DefaultRefreshHeader
 import com.dsbt.lib.composerefreshlayout.RefreshLayout
 import com.dsbt.lib.composerefreshlayout.RefreshLayoutState
 import com.dsbt.lib.composerefreshlayout.rememberRefreshLayoutState
@@ -52,6 +54,14 @@ class MainActivity : ComponentActivity() {
                         },
                         onLoadMore = {
                             loadMore(scope, state)
+                        },
+                        enableLoadMore = true,
+                        enableRefresh = true,
+                        header = {
+                            DefaultRefreshHeader(state = it)
+                        },
+                        footer = {
+                            DefaultRefreshFooter(state = it)
                         }
                     ) {
                         LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize()) {
