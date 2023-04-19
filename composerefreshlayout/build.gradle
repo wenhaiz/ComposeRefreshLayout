@@ -3,19 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'maven-publish'
 }
-publishing {
-    publications {
-        release(MavenPublication) {
-            groupId = 'com.dsbt.lib'
-            artifactId = 'composerefreshlayout'
-            version = '0.1.0-beta.2'
-
-            afterEvaluate {
-                from components.release
-            }
-        }
-    }
-}
 
 android {
     publishing {
@@ -74,4 +61,18 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.dsbt.lib'
+                artifactId = 'composerefreshlayout'
+                version = '0.1.0-beta.2'
+            }
+        }
+    }
 }
