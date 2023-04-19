@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,24 +22,22 @@ import androidx.compose.ui.unit.dp
 import com.dsbt.demo.compose.refreshlayout.ui.theme.RefreshLayoutComposeTheme
 import com.dsbt.lib.composerefreshlayout.RefreshLayout
 import com.dsbt.lib.composerefreshlayout.RefreshLayoutState
+import com.dsbt.lib.composerefreshlayout.rememberRefreshLayoutState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private var cursor = 10
+    private var data by mutableStateOf((0 until cursor).map { it })
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             RefreshLayoutComposeTheme {
                 // A surface container using the 'background' color from the theme
-                val state = remember {
-                    RefreshLayoutState()
-                }
-                var cur = remember {
-                    10
-                }
-                var data by remember {
-                    mutableStateOf((0 until cur).map { it })
-                }
+                val state = rememberRefreshLayoutState()
                 val scope = rememberCoroutineScope()
                 val lazyListState = rememberLazyListState()
                 Surface(
@@ -51,23 +48,10 @@ class MainActivity : ComponentActivity() {
                         state = state,
                         contentScrollState = lazyListState,
                         onRefresh = {
-                            scope.launch {
-                                delay(1000)
-                                cur = 10
-                                data = (0 until cur).map { it }
-                                state.finishRefresh(success = true)
-                            }
+                            refresh(scope, state)
                         },
                         onLoadMore = {
-                            scope.launch {
-                                delay(1000)
-                                if (cur < 100) {
-                                    val newCur = cur + 10
-                                    data = data + (cur until newCur).map { it }
-                                    cur = newCur
-                                }
-                                state.finishLoadMore(true, cur < 100)
-                            }
+                            loadMore(scope, state)
                         }
                     ) {
                         LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize()) {
@@ -81,6 +65,33 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun loadMore(
+        scope: CoroutineScope,
+        state: RefreshLayoutState
+    ) {
+        scope.launch {
+            delay(1000)
+            if (cursor < 100) {
+                val newCur = cursor + 10
+                data = data + (cursor until newCur).map { it }
+                cursor = newCur
+            }
+            state.finishLoadMore(success = true, hasMoreData = cursor < 100)
+        }
+    }
+
+    private fun refresh(
+        scope: CoroutineScope,
+        state: RefreshLayoutState
+    ) {
+        scope.launch {
+            delay(1000)
+            cursor = 10
+            data = (0 until cursor).map { it }
+            state.finishRefresh(success = true)
         }
     }
 }
