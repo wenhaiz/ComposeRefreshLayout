@@ -60,13 +60,19 @@ class RefreshLayoutState {
     internal var loadMoreTriggerPx = -300
         set(value) {
             field = value
-            maxScrollUpPx = value.absoluteValue + 100
+            maxScrollUpPx = value.absoluteValue - 100
         }
 
     var isRefreshing by mutableStateOf(RefreshState())
         private set
     var isLoadingMore by mutableStateOf(RefreshState())
         private set
+
+    val refreshDragProgress: Float
+        get() = (offsetY / refreshTriggerPx).absoluteValue
+
+    val loadMoreDragProgress: Float
+        get() = (offsetY / loadMoreTriggerPx).absoluteValue
 
 
     val isDragging: Boolean
