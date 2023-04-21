@@ -65,7 +65,7 @@ sealed class DragState constructor(
 
     }
 
-    class LoadMoreGState internal constructor(offsetY: State<Float>) : DragState(offsetY) {
+    class LoadMoreState internal constructor(offsetY: State<Float>) : DragState(offsetY) {
         override val dragProgress: Float
             get() = if (offsetY >= 0) 0f else (offsetY / triggerDistancePx).absoluteValue
 
@@ -103,7 +103,7 @@ class RefreshLayoutState {
     private val _offsetY = Animatable(0f)
 
     val dragState = DragState.RefreshState(_offsetY.asState())
-    val loadMoreState = DragState.LoadMoreGState(_offsetY.asState())
+    val loadMoreState = DragState.LoadMoreState(_offsetY.asState())
 
     private val mutatorMutex = MutatorMutex()
     val offsetY: Float

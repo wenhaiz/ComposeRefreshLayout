@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun DefaultRefreshFooter(state: DragState.LoadMoreGState, color: Color = Color(0xFF808080)) {
+fun DefaultRefreshFooter(state: DragState.LoadMoreState, color: Color = Color(0xFF808080)) {
     var text by remember {
         mutableStateOf("")
     }

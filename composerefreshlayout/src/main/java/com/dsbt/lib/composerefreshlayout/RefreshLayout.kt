@@ -57,7 +57,7 @@ fun RefreshLayout(
     header: @Composable BoxScope.(DragState.RefreshState) -> Unit = {
         DefaultRefreshHeader(state = it)
     },
-    footer: @Composable BoxScope.(DragState.LoadMoreGState) -> Unit = {
+    footer: @Composable BoxScope.(DragState.LoadMoreState) -> Unit = {
         DefaultRefreshFooter(state = it)
     },
     enableRefresh: Boolean = true,
