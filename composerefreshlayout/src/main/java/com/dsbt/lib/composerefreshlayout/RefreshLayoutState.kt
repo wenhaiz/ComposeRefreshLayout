@@ -60,15 +60,15 @@ class RefreshLayoutState {
             field = value
             maxScrollDownPx = value + 100
         }
-    internal var loadMoreTriggerPx = -300
+    internal var loadMoreTriggerPx = 300
         set(value) {
             field = value
             maxScrollUpPx = value.absoluteValue + 100
         }
 
-    var isRefreshing by mutableStateOf(RefreshState())
+    var refreshState by mutableStateOf(RefreshState())
         private set
-    var isLoadingMore by mutableStateOf(RefreshState())
+    var loadMoreState by mutableStateOf(RefreshState())
         private set
 
     val refreshDragProgress: Float
@@ -79,7 +79,7 @@ class RefreshLayoutState {
 
 
     val isDragging: Boolean
-        get() = isRefreshing.state == State.Dragging || isLoadingMore.state == State.Dragging
+        get() = refreshState.state == State.Dragging || loadMoreState.state == State.Dragging
 
     private val _offsetY = Animatable(0f)
     private val mutatorMutex = MutatorMutex()
@@ -97,17 +97,17 @@ class RefreshLayoutState {
             val newValue = _offsetY.value + delta
             if (newValue > 0) {
                 //scroll down
-                isRefreshing = if (newValue >= refreshTriggerPx) {
-                    isRefreshing.copy(state = State.ReadyForAction)
+                refreshState = if (newValue >= refreshTriggerPx) {
+                    refreshState.copy(state = State.ReadyForAction)
                 } else {
-                    isRefreshing.copy(state = State.Dragging)
+                    refreshState.copy(state = State.Dragging)
                 }
             } else if (newValue < 0) {
                 //scroll up
-                isLoadingMore = if (newValue <= loadMoreTriggerPx) {
-                    isLoadingMore.copy(state = State.ReadyForAction)
+                loadMoreState = if (newValue.absoluteValue >= loadMoreTriggerPx) {
+                    loadMoreState.copy(state = State.ReadyForAction)
                 } else {
-                    isLoadingMore.copy(state = State.Dragging)
+                    loadMoreState.copy(state = State.Dragging)
                 }
             }
             _offsetY.snapTo(newValue)
@@ -115,20 +115,20 @@ class RefreshLayoutState {
     }
 
     internal fun startRefresh() {
-        isRefreshing = isRefreshing.copy(state = State.InProgress)
+        refreshState = refreshState.copy(state = State.InProgress)
     }
 
 
     internal fun startLoadMore() {
-        isLoadingMore = isLoadingMore.copy(state = State.InProgress)
+        loadMoreState = loadMoreState.copy(state = State.InProgress)
     }
 
     internal fun idle() {
-        if (isRefreshing.state != State.IDLE) {
-            isRefreshing = isRefreshing.copy(state = State.IDLE)
+        if (refreshState.state != State.IDLE) {
+            refreshState = refreshState.copy(state = State.IDLE)
         }
-        if (isLoadingMore.state != State.IDLE) {
-            isLoadingMore = isLoadingMore.copy(state = State.IDLE)
+        if (loadMoreState.state != State.IDLE) {
+            loadMoreState = loadMoreState.copy(state = State.IDLE)
         }
     }
 
@@ -141,9 +141,9 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishLoadMore(success: Boolean, hasMoreData: Boolean, delay: Long = 1000) {
-        isLoadingMore = isLoadingMore.copy(state = if (success) State.Success else State.Failed)
+        loadMoreState = loadMoreState.copy(state = if (success) State.Success else State.Failed)
         delay(delay)
-        isLoadingMore = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
+        loadMoreState = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
     }
 
     /**
@@ -154,10 +154,10 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishRefresh(success: Boolean, hasMoreData: Boolean = true, delay: Long = 1000) {
-        isRefreshing = isRefreshing.copy(state = if (success) State.Success else State.Failed)
+        refreshState = refreshState.copy(state = if (success) State.Success else State.Failed)
         delay(delay)
-        isRefreshing = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
-        isLoadingMore = isLoadingMore.copy(hasMoreData = hasMoreData)
+        refreshState = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
+        loadMoreState = loadMoreState.copy(hasMoreData = hasMoreData)
     }
 
 }

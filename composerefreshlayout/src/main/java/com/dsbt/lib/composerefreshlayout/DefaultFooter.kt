@@ -31,15 +31,15 @@ fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808
         mutableStateOf("")
     }
     val newText = when {
-        state.isLoadingMore.state == State.Resetting -> ""
-        (state.isLoadingMore.state == State.IDLE || state.isLoadingMore.state == State.Dragging) && !state.isLoadingMore.hasMoreData -> stringResource(
+        state.loadMoreState.state == State.Resetting -> ""
+        (state.loadMoreState.state == State.IDLE || state.loadMoreState.state == State.Dragging) && !state.loadMoreState.hasMoreData -> stringResource(
             id = R.string.footer_no_more
         )
 
-        state.isLoadingMore.state == State.InProgress -> stringResource(id = R.string.footer_refreshing)
-        state.isLoadingMore.state == State.Success -> stringResource(id = R.string.footer_complete)
-        state.isLoadingMore.state == State.Failed -> stringResource(id = R.string.footer_failed)
-        state.isLoadingMore.state == State.ReadyForAction -> stringResource(id = R.string.footer_pulling)
+        state.loadMoreState.state == State.InProgress -> stringResource(id = R.string.footer_refreshing)
+        state.loadMoreState.state == State.Success -> stringResource(id = R.string.footer_complete)
+        state.loadMoreState.state == State.Failed -> stringResource(id = R.string.footer_failed)
+        state.loadMoreState.state == State.ReadyForAction -> stringResource(id = R.string.footer_pulling)
         else -> stringResource(id = R.string.footer_idle)
     }
     if (newText.isNotEmpty()) {
@@ -56,7 +56,7 @@ fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808
             modifier = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val loadMoreState = state.isLoadingMore.state
+            val loadMoreState = state.loadMoreState.state
             val agree =
                 if (loadMoreState == State.ReadyForAction || loadMoreState == State.InProgress) {
                     -90f

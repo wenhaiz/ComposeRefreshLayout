@@ -34,7 +34,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
             .fillMaxWidth()
     ) {
         val agree =
-            if (state.isRefreshing.state == State.ReadyForAction || state.isRefreshing.state == State.InProgress) {
+            if (state.refreshState.state == State.ReadyForAction || state.refreshState.state == State.InProgress) {
                 90f
             } else {
                 -90f
@@ -46,7 +46,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                 .fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state.isRefreshing.state == State.InProgress) {
+            if (state.refreshState.state == State.InProgress) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -54,7 +54,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                     color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!state.isRefreshing.state.isFinishing) {
+            } else if (!state.refreshState.state.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier
@@ -70,7 +70,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
             var headerText by remember {
                 mutableStateOf("")
             }
-            val text = when (state.isRefreshing.state) {
+            val text = when (state.refreshState.state) {
                 State.IDLE -> stringResource(id = R.string.header_idle)
                 State.ReadyForAction -> stringResource(id = R.string.header_pulling)
                 State.InProgress -> stringResource(id = R.string.header_refreshing)

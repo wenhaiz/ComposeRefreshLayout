@@ -67,23 +67,23 @@ fun RefreshLayout(
     var headerHeight by remember { mutableStateOf(0) }
     var footerHeight by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(state.isRefreshing) {
+    LaunchedEffect(state.refreshState) {
         coroutineScope.launch {
-            if (state.isRefreshing.state == State.InProgress) {
+            if (state.refreshState.state == State.InProgress) {
                 onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
-            } else if (state.isRefreshing.state.isResetting) {
+            } else if (state.refreshState.state.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
             }
         }
     }
-    LaunchedEffect(state.isLoadingMore) {
+    LaunchedEffect(state.loadMoreState) {
         coroutineScope.launch {
-            if (state.isLoadingMore.state == State.InProgress) {
+            if (state.loadMoreState.state == State.InProgress) {
                 onLoadMore()
                 state.animateOffsetTo(-footerHeight.toFloat())
-            } else if (state.isLoadingMore.state.isResetting) {
+            } else if (state.loadMoreState.state.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
             }
@@ -138,7 +138,7 @@ fun RefreshLayout(
                     translationY = y
                 }
                 .onSizeChanged {
-                    state.loadMoreTriggerPx = -it.height
+                    state.loadMoreTriggerPx = it.height
                     footerHeight = it.height
                 }
                 .align(Alignment.BottomCenter)
@@ -148,10 +148,10 @@ fun RefreshLayout(
         var stateOffsetY = remember {
             0f
         }
-        LaunchedEffect(state.isLoadingMore) {
-            if (state.isLoadingMore.state == State.InProgress) {
+        LaunchedEffect(state.loadMoreState) {
+            if (state.loadMoreState.state == State.InProgress) {
                 stateOffsetY = state.offsetY
-            } else if (state.isLoadingMore.state.isResetting) {
+            } else if (state.loadMoreState.state.isResetting) {
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {
@@ -159,10 +159,10 @@ fun RefreshLayout(
                 }
             }
         }
-        LaunchedEffect(state.isRefreshing) {
-            if (state.isRefreshing.state == State.InProgress) {
+        LaunchedEffect(state.refreshState) {
+            if (state.refreshState.state == State.InProgress) {
                 stateOffsetY = state.offsetY
-            } else if (state.isRefreshing.state.isResetting) {
+            } else if (state.refreshState.state.isResetting) {
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {
