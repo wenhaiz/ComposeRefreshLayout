@@ -5,7 +5,7 @@
 An Android [Compose](https://developer.android.com/jetpack/compose) component which supports refreshing and loading more data.
 
 ## Sample
-![](/media/demo.gif)
+![](/media/sample.gif)
 
 ## Usage
 
