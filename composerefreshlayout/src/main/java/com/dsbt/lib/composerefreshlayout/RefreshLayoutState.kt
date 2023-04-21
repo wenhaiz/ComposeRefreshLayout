@@ -60,7 +60,7 @@ class RefreshLayoutState {
     internal var loadMoreTriggerPx = -300
         set(value) {
             field = value
-            maxScrollUpPx = value.absoluteValue - 100
+            maxScrollUpPx = value.absoluteValue + 100
         }
 
     var isRefreshing by mutableStateOf(RefreshState())
