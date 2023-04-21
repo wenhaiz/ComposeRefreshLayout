@@ -115,5 +115,5 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
 
 
 # TODO
-- Refine header and footer behavior
-- Cover more cases       
+- Cover more cases    
+- Refine refresh state definition
