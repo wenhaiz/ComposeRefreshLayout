@@ -49,8 +49,8 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun RefreshLayout(
-    state: RefreshLayoutState,
     modifier: Modifier = Modifier,
+    state: RefreshLayoutState = rememberRefreshLayoutState(),
     header: @Composable BoxScope.(RefreshLayoutState) -> Unit = {
         DefaultRefreshHeader(state = it)
     },
@@ -61,7 +61,7 @@ fun RefreshLayout(
     enableLoadMore: Boolean = true,
     onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
-    contentScrollState: ScrollableState,
+    contentScrollState: ScrollableState? = null,
     content: @Composable BoxScope.(RefreshLayoutState) -> Unit,
 ) {
     var headerHeight by remember { mutableStateOf(0) }
@@ -155,7 +155,7 @@ fun RefreshLayout(
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {
-                    contentScrollState.animateScrollBy(delta)
+                    contentScrollState?.animateScrollBy(delta)
                 }
             }
         }
@@ -166,7 +166,7 @@ fun RefreshLayout(
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {
-                    contentScrollState.animateScrollBy(delta)
+                    contentScrollState?.animateScrollBy(delta)
                 }
             }
         }
