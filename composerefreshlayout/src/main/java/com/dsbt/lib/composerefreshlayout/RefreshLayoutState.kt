@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
 
-enum class State {
+enum class GestureState {
     IDLE,
     Dragging,
     ReadyForAction,
@@ -46,7 +46,7 @@ fun rememberRefreshLayoutState(): RefreshLayoutState {
 class RefreshLayoutState {
 
     data class RefreshState(
-        val state: State = State.IDLE,
+        val gestureState: GestureState = GestureState.IDLE,
         val hasMoreData: Boolean = true,
     )
 
@@ -79,7 +79,7 @@ class RefreshLayoutState {
 
 
     val isDragging: Boolean
-        get() = refreshState.state == State.Dragging || loadMoreState.state == State.Dragging
+        get() = refreshState.gestureState == GestureState.Dragging || loadMoreState.gestureState == GestureState.Dragging
 
     private val _offsetY = Animatable(0f)
     private val mutatorMutex = MutatorMutex()
@@ -98,16 +98,16 @@ class RefreshLayoutState {
             if (newValue > 0) {
                 //scroll down
                 refreshState = if (newValue >= refreshTriggerPx) {
-                    refreshState.copy(state = State.ReadyForAction)
+                    refreshState.copy(gestureState = GestureState.ReadyForAction)
                 } else {
-                    refreshState.copy(state = State.Dragging)
+                    refreshState.copy(gestureState = GestureState.Dragging)
                 }
             } else if (newValue < 0) {
                 //scroll up
                 loadMoreState = if (newValue.absoluteValue >= loadMoreTriggerPx) {
-                    loadMoreState.copy(state = State.ReadyForAction)
+                    loadMoreState.copy(gestureState = GestureState.ReadyForAction)
                 } else {
-                    loadMoreState.copy(state = State.Dragging)
+                    loadMoreState.copy(gestureState = GestureState.Dragging)
                 }
             }
             _offsetY.snapTo(newValue)
@@ -115,20 +115,20 @@ class RefreshLayoutState {
     }
 
     internal fun startRefresh() {
-        refreshState = refreshState.copy(state = State.InProgress)
+        refreshState = refreshState.copy(gestureState = GestureState.InProgress)
     }
 
 
     internal fun startLoadMore() {
-        loadMoreState = loadMoreState.copy(state = State.InProgress)
+        loadMoreState = loadMoreState.copy(gestureState = GestureState.InProgress)
     }
 
     internal fun idle() {
-        if (refreshState.state != State.IDLE) {
-            refreshState = refreshState.copy(state = State.IDLE)
+        if (refreshState.gestureState != GestureState.IDLE) {
+            refreshState = refreshState.copy(gestureState = GestureState.IDLE)
         }
-        if (loadMoreState.state != State.IDLE) {
-            loadMoreState = loadMoreState.copy(state = State.IDLE)
+        if (loadMoreState.gestureState != GestureState.IDLE) {
+            loadMoreState = loadMoreState.copy(gestureState = GestureState.IDLE)
         }
     }
 
@@ -141,9 +141,9 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishLoadMore(success: Boolean, hasMoreData: Boolean, delay: Long = 1000) {
-        loadMoreState = loadMoreState.copy(state = if (success) State.Success else State.Failed)
+        loadMoreState = loadMoreState.copy(gestureState = if (success) GestureState.Success else GestureState.Failed)
         delay(delay)
-        loadMoreState = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
+        loadMoreState = RefreshState(gestureState = GestureState.Resetting, hasMoreData = hasMoreData)
     }
 
     /**
@@ -154,9 +154,9 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishRefresh(success: Boolean, hasMoreData: Boolean = true, delay: Long = 1000) {
-        refreshState = refreshState.copy(state = if (success) State.Success else State.Failed)
+        refreshState = refreshState.copy(gestureState = if (success) GestureState.Success else GestureState.Failed)
         delay(delay)
-        refreshState = RefreshState(state = State.Resetting, hasMoreData = hasMoreData)
+        refreshState = RefreshState(gestureState = GestureState.Resetting, hasMoreData = hasMoreData)
         loadMoreState = loadMoreState.copy(hasMoreData = hasMoreData)
     }
 

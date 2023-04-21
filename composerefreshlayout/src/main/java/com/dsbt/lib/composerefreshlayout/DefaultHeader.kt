@@ -34,7 +34,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
             .fillMaxWidth()
     ) {
         val agree =
-            if (state.refreshState.state == State.ReadyForAction || state.refreshState.state == State.InProgress) {
+            if (state.refreshState.gestureState == GestureState.ReadyForAction || state.refreshState.gestureState == GestureState.InProgress) {
                 90f
             } else {
                 -90f
@@ -46,7 +46,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                 .fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state.refreshState.state == State.InProgress) {
+            if (state.refreshState.gestureState == GestureState.InProgress) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -54,7 +54,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                     color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!state.refreshState.state.isFinishing) {
+            } else if (!state.refreshState.gestureState.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier
@@ -70,12 +70,12 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
             var headerText by remember {
                 mutableStateOf("")
             }
-            val text = when (state.refreshState.state) {
-                State.IDLE -> stringResource(id = R.string.header_idle)
-                State.ReadyForAction -> stringResource(id = R.string.header_pulling)
-                State.InProgress -> stringResource(id = R.string.header_refreshing)
-                State.Success -> stringResource(id = R.string.header_complete)
-                State.Failed -> stringResource(id = R.string.header_failed)
+            val text = when (state.refreshState.gestureState) {
+                GestureState.IDLE -> stringResource(id = R.string.header_idle)
+                GestureState.ReadyForAction -> stringResource(id = R.string.header_pulling)
+                GestureState.InProgress -> stringResource(id = R.string.header_refreshing)
+                GestureState.Success -> stringResource(id = R.string.header_complete)
+                GestureState.Failed -> stringResource(id = R.string.header_failed)
                 else -> ""
             }
             if (headerText != text && text.isNotEmpty()) {

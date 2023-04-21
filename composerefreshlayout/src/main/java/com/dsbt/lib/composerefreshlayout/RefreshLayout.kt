@@ -69,10 +69,10 @@ fun RefreshLayout(
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(state.refreshState) {
         coroutineScope.launch {
-            if (state.refreshState.state == State.InProgress) {
+            if (state.refreshState.gestureState == GestureState.InProgress) {
                 onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
-            } else if (state.refreshState.state.isResetting) {
+            } else if (state.refreshState.gestureState.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
             }
@@ -80,10 +80,10 @@ fun RefreshLayout(
     }
     LaunchedEffect(state.loadMoreState) {
         coroutineScope.launch {
-            if (state.loadMoreState.state == State.InProgress) {
+            if (state.loadMoreState.gestureState == GestureState.InProgress) {
                 onLoadMore()
                 state.animateOffsetTo(-footerHeight.toFloat())
-            } else if (state.loadMoreState.state.isResetting) {
+            } else if (state.loadMoreState.gestureState.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
             }
@@ -149,9 +149,9 @@ fun RefreshLayout(
             0f
         }
         LaunchedEffect(state.loadMoreState) {
-            if (state.loadMoreState.state == State.InProgress) {
+            if (state.loadMoreState.gestureState == GestureState.InProgress) {
                 stateOffsetY = state.offsetY
-            } else if (state.loadMoreState.state.isResetting) {
+            } else if (state.loadMoreState.gestureState.isResetting) {
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {
@@ -160,9 +160,9 @@ fun RefreshLayout(
             }
         }
         LaunchedEffect(state.refreshState) {
-            if (state.refreshState.state == State.InProgress) {
+            if (state.refreshState.gestureState == GestureState.InProgress) {
                 stateOffsetY = state.offsetY
-            } else if (state.refreshState.state.isResetting) {
+            } else if (state.refreshState.gestureState.isResetting) {
                 val delta = stateOffsetY - state.offsetY
                 stateOffsetY = state.offsetY
                 if (delta != 0f) {

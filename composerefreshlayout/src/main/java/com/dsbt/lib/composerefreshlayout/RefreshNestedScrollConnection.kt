@@ -60,7 +60,7 @@ class RefreshNestedScrollConnection(
     ): Offset {
         return when {
             source != NestedScrollSource.Drag -> Offset.Zero
-            state.refreshState.state == State.InProgress || state.loadMoreState.state == State.InProgress -> Offset.Zero
+            state.refreshState.gestureState == GestureState.InProgress || state.loadMoreState.gestureState == GestureState.InProgress -> Offset.Zero
             else -> onPostScroll(available)
         }
 
@@ -88,9 +88,9 @@ class RefreshNestedScrollConnection(
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        if (state.refreshState.state == State.ReadyForAction && state.refreshState.hasMoreData) {
+        if (state.refreshState.gestureState == GestureState.ReadyForAction && state.refreshState.hasMoreData) {
             state.startRefresh()
-        } else if (state.loadMoreState.state == State.ReadyForAction && state.loadMoreState.hasMoreData) {
+        } else if (state.loadMoreState.gestureState == GestureState.ReadyForAction && state.loadMoreState.hasMoreData) {
             state.startLoadMore()
         } else {
             state.idle()

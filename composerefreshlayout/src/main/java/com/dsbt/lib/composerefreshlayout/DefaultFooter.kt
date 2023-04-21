@@ -31,15 +31,15 @@ fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808
         mutableStateOf("")
     }
     val newText = when {
-        state.loadMoreState.state == State.Resetting -> ""
-        (state.loadMoreState.state == State.IDLE || state.loadMoreState.state == State.Dragging) && !state.loadMoreState.hasMoreData -> stringResource(
+        state.loadMoreState.gestureState == GestureState.Resetting -> ""
+        (state.loadMoreState.gestureState == GestureState.IDLE || state.loadMoreState.gestureState == GestureState.Dragging) && !state.loadMoreState.hasMoreData -> stringResource(
             id = R.string.footer_no_more
         )
 
-        state.loadMoreState.state == State.InProgress -> stringResource(id = R.string.footer_refreshing)
-        state.loadMoreState.state == State.Success -> stringResource(id = R.string.footer_complete)
-        state.loadMoreState.state == State.Failed -> stringResource(id = R.string.footer_failed)
-        state.loadMoreState.state == State.ReadyForAction -> stringResource(id = R.string.footer_pulling)
+        state.loadMoreState.gestureState == GestureState.InProgress -> stringResource(id = R.string.footer_refreshing)
+        state.loadMoreState.gestureState == GestureState.Success -> stringResource(id = R.string.footer_complete)
+        state.loadMoreState.gestureState == GestureState.Failed -> stringResource(id = R.string.footer_failed)
+        state.loadMoreState.gestureState == GestureState.ReadyForAction -> stringResource(id = R.string.footer_pulling)
         else -> stringResource(id = R.string.footer_idle)
     }
     if (newText.isNotEmpty()) {
@@ -56,15 +56,15 @@ fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808
             modifier = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val loadMoreState = state.loadMoreState.state
+            val loadMoreState = state.loadMoreState.gestureState
             val agree =
-                if (loadMoreState == State.ReadyForAction || loadMoreState == State.InProgress) {
+                if (loadMoreState == GestureState.ReadyForAction || loadMoreState == GestureState.InProgress) {
                     -90f
                 } else {
                     90f
                 }
             val rotation by animateFloatAsState(targetValue = agree)
-            if (loadMoreState == State.InProgress) {
+            if (loadMoreState == GestureState.InProgress) {
                 androidx.compose.material.CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)
