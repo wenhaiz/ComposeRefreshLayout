@@ -78,25 +78,24 @@ or `state.finishLoadMore()` to finish the refresh or load more action.
 ## Customize
 By default, `RefreshLayout` uses `DefaultRefreshHeader` and `DefaultRefreshFooter` as header and footer.
 You can customize them by passing your own header and footer.
-You can define the behavior of header and footer depends on the state of `RefreshLayoutState`.
+You can define the behavior of header and footer depends on the state of `ActionState.RefreshingState` or `ActionState.LoadingMoreState`.
 
 For example:  
 
 ```kotlin
 @Composable
-fun DefaultRefreshHeader(state: RefreshLayoutState) {
-    val heightDp = 80.dp
+fun DefaultRefreshHeader(state: ActionState.RefreshingState) {
     var text by remember {
         mutableStateOf("")
     }
-    // update text depends on the state of RefreshLayoutState
+    // update text depends on ActionState.RefreshingState
     val newText = when {
-        state.isRefreshing.state == State.Resetting -> ""
-        (state.isRefreshing.state == State.IDLE || state.isRefreshing.state == State.Dragging) && !state.isRefreshing.hasMoreData -> "No more data"
-        state.isRefreshing.state == State.InProgress -> "Refreshing"
-        state.isRefreshing.state == State.Success -> "Refresh success"
-        state.isRefreshing.state == State.Failed -> "Refresh failed"
-        state.isRefreshing.state == State.ReadyForAction -> "Release to refresh"
+        state.componentStatus == ActionComponentStatus.Resetting -> ""
+        (state.componentStatus == ActionComponentStatus.IDLE || state.componentStatus == ActionComponentStatus.Dragging) && !state.hasMoreData -> "No more data"
+        state.componentStatus == ActionComponentStatus.InProgress -> "Refreshing"
+        state.componentStatus == ActionComponentStatus.Success -> "Refresh success"
+        state.componentStatus == ActionComponentStatus.Failed -> "Refresh failed"
+        state.componentStatus == ActionComponentStatus.ReadyForAction -> "Release to refresh"
         else -> "Pull down to refresh"
     }
     if (newText.isNotEmpty()) {
@@ -104,7 +103,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
     }
     Box(
         modifier = Modifier
-            .height(heightDp)
+            .height(80.dp)
             .fillMaxWidth()
     ) {
         Text(text = text, modifier = Modifier.align(Alignment.Center))
@@ -115,5 +114,4 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
 
 
 # TODO
-- Cover more cases    
-- Refine refresh state definition
+- Cover more cases
