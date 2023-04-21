@@ -23,6 +23,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import kotlinx.coroutines.launch
 
+private const val TAG = "RefreshLayout"
+
 /**
  * A refresh layout that can be used to refresh and load more data.
  *
@@ -67,6 +69,17 @@ fun RefreshLayout(
     var headerHeight by remember { mutableStateOf(0) }
     var footerHeight by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
+    val conn = remember {
+        RefreshNestedScrollConnection(
+            state = state,
+            coroutineScope = coroutineScope,
+            enableRefresh = enableRefresh,
+            enableLoadMore = enableLoadMore
+        )
+    }.apply {
+        this.enableRefresh = enableRefresh
+        this.enableLoadMore = enableLoadMore
+    }
     LaunchedEffect(state.refreshState) {
         coroutineScope.launch {
             if (state.refreshState.gestureState == GestureState.InProgress) {
@@ -88,17 +101,6 @@ fun RefreshLayout(
                 state.idle()
             }
         }
-    }
-    val conn = remember {
-        RefreshNestedScrollConnection(
-            state = state,
-            coroutineScope = coroutineScope,
-            enableRefresh = enableRefresh,
-            enableLoadMore = enableLoadMore
-        )
-    }.apply {
-        this.enableRefresh = enableRefresh
-        this.enableLoadMore = enableLoadMore
     }
     Box(
         modifier = modifier
