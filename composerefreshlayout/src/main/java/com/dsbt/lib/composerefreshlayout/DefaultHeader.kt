@@ -25,12 +25,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
-private val State.isFinished: Boolean
-    get() = this == State.Success || this == State.Failed || this == State.Resetting
-
 
 @Composable
-fun DefaultRefreshHeader(state: RefreshLayoutState) {
+fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808080)) {
     Box(
         modifier = Modifier
             .height(80.dp)
@@ -54,10 +51,10 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
                     modifier = Modifier
                         .padding(end = 12.dp)
                         .size(24.dp),
-                    color = Color(0xFF808080),
+                    color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!state.isRefreshing.state.isFinished) {
+            } else if (!state.isRefreshing.state.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier
@@ -67,7 +64,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
                         .graphicsLayer {
                             this.rotationZ = rotation
                         },
-                    colorFilter = ColorFilter.tint(color = Color(0xFF808080))
+                    colorFilter = ColorFilter.tint(color = color)
                 )
             }
             var headerText by remember {
@@ -84,7 +81,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState) {
             if (headerText != text && text.isNotEmpty()) {
                 headerText = text
             }
-            Text(text = headerText, color = Color(0xFF808080))
+            Text(text = headerText, color = color)
         }
     }
 }

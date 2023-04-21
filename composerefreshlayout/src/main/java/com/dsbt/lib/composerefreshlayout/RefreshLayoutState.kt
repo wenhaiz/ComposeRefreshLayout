@@ -25,6 +25,9 @@ enum class State {
 
     val isResetting: Boolean
         get() = this == Resetting || this == IDLE
+
+    val isFinishing: Boolean
+        get() = this == Success || this == Failed || this == Resetting
 }
 
 /**
