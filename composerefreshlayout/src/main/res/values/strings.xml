@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="header_idle">Pull down to refresh</string>
+    <string name="header_pulling">Release to refresh</string>
+    <string name="header_refreshing">Refreshing…</string>
+    <string name="header_complete">Refresh success</string>
+    <string name="header_failed">Refresh failed</string>
+
+    <string name="footer_idle">Pull up to load more</string>
+    <string name="footer_pulling">Release to load more</string>
+    <string name="footer_refreshing">Loading…</string>
+    <string name="footer_complete">Load success</string>
+    <string name="footer_failed">Load failed</string>
+    <string name="footer_no_more">No more data</string>
+</resources>

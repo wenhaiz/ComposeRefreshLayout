@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="header_idle">下拉刷新数据</string>
+    <string name="header_pulling">松开刷新数据</string>
+    <string name="header_refreshing">正在刷新…</string>
+    <string name="header_complete">刷新完成</string>
+    <string name="header_failed">刷新失败</string>
+
+    <string name="footer_idle">上拉加载数据</string>
+    <string name="footer_pulling">松开加载数据</string>
+    <string name="footer_refreshing">正在加载…</string>
+    <string name="footer_complete">加载完成</string>
+    <string name="footer_failed">加载失败</string>
+    <string name="footer_no_more">没有更多数据了</string>
+</resources>
