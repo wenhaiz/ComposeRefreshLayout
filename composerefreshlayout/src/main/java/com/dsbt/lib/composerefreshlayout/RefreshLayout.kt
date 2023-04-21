@@ -1,5 +1,6 @@
 package com.dsbt.lib.composerefreshlayout
 
+import android.util.Log
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -21,7 +23,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
-import kotlinx.coroutines.launch
 
 private const val TAG = "RefreshLayout"
 
@@ -53,10 +54,10 @@ private const val TAG = "RefreshLayout"
 fun RefreshLayout(
     modifier: Modifier = Modifier,
     state: RefreshLayoutState = rememberRefreshLayoutState(),
-    header: @Composable BoxScope.(RefreshLayoutState) -> Unit = {
+    header: @Composable BoxScope.(DragState.RefreshState) -> Unit = {
         DefaultRefreshHeader(state = it)
     },
-    footer: @Composable BoxScope.(RefreshLayoutState) -> Unit = {
+    footer: @Composable BoxScope.(DragState.LoadMoreGState) -> Unit = {
         DefaultRefreshFooter(state = it)
     },
     enableRefresh: Boolean = true,
@@ -80,25 +81,66 @@ fun RefreshLayout(
         this.enableRefresh = enableRefresh
         this.enableLoadMore = enableLoadMore
     }
-    LaunchedEffect(state.refreshState) {
-        coroutineScope.launch {
-            if (state.refreshState.gestureState == GestureState.InProgress) {
+    LaunchedEffect(state.dragState) {
+        snapshotFlow {
+            state.dragState._gestureState
+        }.collect {
+            Log.d(TAG, "RefreshLayout: refreshState $it ")
+            if (it == GestureState.InProgress) {
                 onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
-            } else if (state.refreshState.gestureState.isResetting) {
+            } else if (it.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
+            } else if (it == GestureState.IDLE) {
+                state.animateOffsetTo(0f)
             }
         }
     }
     LaunchedEffect(state.loadMoreState) {
-        coroutineScope.launch {
-            if (state.loadMoreState.gestureState == GestureState.InProgress) {
+        snapshotFlow {
+            state.loadMoreState._gestureState
+        }.collect {
+            Log.d(TAG, "RefreshLayout: loadMoreState $it")
+            if (it == GestureState.InProgress) {
                 onLoadMore()
                 state.animateOffsetTo(-footerHeight.toFloat())
-            } else if (state.loadMoreState.gestureState.isResetting) {
+            } else if (it.isResetting) {
                 state.animateOffsetTo(0f)
                 state.idle()
+            } else if (it == GestureState.IDLE) {
+                state.animateOffsetTo(0f)
+            }
+        }
+    }
+    var stateOffsetY = remember {
+        0f
+    }
+    LaunchedEffect(state) {
+        snapshotFlow {
+            Pair(state.offsetY, state.loadMoreState._gestureState)
+        }.collect {
+            if (state.loadMoreState._gestureState == GestureState.Success || state.loadMoreState._gestureState == GestureState.Failed) {
+                stateOffsetY = it.first
+                Log.d(TAG, "RefreshLayout: offsetY ${it.first}")
+            } else if (it.second == GestureState.Resetting) {
+                if (stateOffsetY != 0f) {
+                    contentScrollState?.animateScrollBy(-stateOffsetY)
+                }
+            }
+        }
+    }
+    LaunchedEffect(state) {
+        snapshotFlow {
+            Pair(state.offsetY, state.dragState._gestureState)
+        }.collect {
+            if (state.dragState._gestureState == GestureState.Success || state.dragState._gestureState == GestureState.Failed) {
+                stateOffsetY = it.first
+                Log.d(TAG, "RefreshLayout: offsetY ${it.first}")
+            } else if (it.second == GestureState.Resetting) {
+                if (stateOffsetY != 0f) {
+                    contentScrollState?.animateScrollBy(-stateOffsetY)
+                }
             }
         }
     }
@@ -125,7 +167,7 @@ fun RefreshLayout(
                     headerHeight = it.height
                 }
         ) {
-            header(state)
+            header(state.dragState)
         }
         Box(
             modifier = Modifier
@@ -145,32 +187,7 @@ fun RefreshLayout(
                 }
                 .align(Alignment.BottomCenter)
         ) {
-            footer(state)
-        }
-        var stateOffsetY = remember {
-            0f
-        }
-        LaunchedEffect(state.loadMoreState) {
-            if (state.loadMoreState.gestureState == GestureState.InProgress) {
-                stateOffsetY = state.offsetY
-            } else if (state.loadMoreState.gestureState.isResetting) {
-                val delta = stateOffsetY - state.offsetY
-                stateOffsetY = state.offsetY
-                if (delta != 0f) {
-                    contentScrollState?.animateScrollBy(delta)
-                }
-            }
-        }
-        LaunchedEffect(state.refreshState) {
-            if (state.refreshState.gestureState == GestureState.InProgress) {
-                stateOffsetY = state.offsetY
-            } else if (state.refreshState.gestureState.isResetting) {
-                val delta = stateOffsetY - state.offsetY
-                stateOffsetY = state.offsetY
-                if (delta != 0f) {
-                    contentScrollState?.animateScrollBy(delta)
-                }
-            }
+            footer(state.loadMoreState)
         }
         Box(modifier = Modifier
             .fillMaxSize()

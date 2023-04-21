@@ -25,38 +25,36 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808080)) {
-    val heightDp = 80.dp
+fun DefaultRefreshFooter(state: DragState.LoadMoreGState, color: Color = Color(0xFF808080)) {
     var text by remember {
         mutableStateOf("")
     }
+    val loadMoreGestureState = state.gestureState
     val newText = when {
-        state.loadMoreState.gestureState == GestureState.Resetting -> ""
-        (state.loadMoreState.gestureState == GestureState.IDLE || state.loadMoreState.gestureState == GestureState.Dragging) && !state.loadMoreState.hasMoreData -> stringResource(
+        loadMoreGestureState == GestureState.Resetting -> ""
+        (loadMoreGestureState == GestureState.IDLE || loadMoreGestureState == GestureState.Dragging) && !state.hasMoreData -> stringResource(
             id = R.string.footer_no_more
         )
 
-        state.loadMoreState.gestureState == GestureState.InProgress -> stringResource(id = R.string.footer_refreshing)
-        state.loadMoreState.gestureState == GestureState.Success -> stringResource(id = R.string.footer_complete)
-        state.loadMoreState.gestureState == GestureState.Failed -> stringResource(id = R.string.footer_failed)
-        state.loadMoreState.gestureState == GestureState.ReadyForAction -> stringResource(id = R.string.footer_pulling)
+        loadMoreGestureState == GestureState.InProgress -> stringResource(id = R.string.footer_refreshing)
+        loadMoreGestureState == GestureState.Success -> stringResource(id = R.string.footer_complete)
+        loadMoreGestureState == GestureState.Failed -> stringResource(id = R.string.footer_failed)
+        loadMoreGestureState == GestureState.ReadyForAction -> stringResource(id = R.string.footer_pulling)
         else -> stringResource(id = R.string.footer_idle)
     }
     if (newText.isNotEmpty()) {
         text = newText
     }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(heightDp)
+            .height(80.dp)
     ) {
-
         Row(
             modifier = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val loadMoreState = state.loadMoreState.gestureState
+            val loadMoreState = state.gestureState
             val agree =
                 if (loadMoreState == GestureState.ReadyForAction || loadMoreState == GestureState.InProgress) {
                     -90f
@@ -72,7 +70,7 @@ fun DefaultRefreshFooter(state: RefreshLayoutState, color: Color = Color(0xFF808
                     color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!loadMoreState.isFinishing) {
+            } else if (state.hasMoreData && !loadMoreState.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier

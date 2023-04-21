@@ -27,14 +27,17 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808080)) {
+fun DefaultRefreshHeader(
+    state: DragState.RefreshState,
+    color: Color = Color(0xFF808080)
+) {
     Box(
         modifier = Modifier
             .height(80.dp)
             .fillMaxWidth()
     ) {
         val agree =
-            if (state.refreshState.gestureState == GestureState.ReadyForAction || state.refreshState.gestureState == GestureState.InProgress) {
+            if (state.gestureState == GestureState.ReadyForAction || state.gestureState == GestureState.InProgress) {
                 90f
             } else {
                 -90f
@@ -46,7 +49,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                 .fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state.refreshState.gestureState == GestureState.InProgress) {
+            if (state.gestureState == GestureState.InProgress) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -54,7 +57,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
                     color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!state.refreshState.gestureState.isFinishing) {
+            } else if (!state.gestureState.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier
@@ -70,7 +73,7 @@ fun DefaultRefreshHeader(state: RefreshLayoutState, color: Color = Color(0xFF808
             var headerText by remember {
                 mutableStateOf("")
             }
-            val text = when (state.refreshState.gestureState) {
+            val text = when (state.gestureState) {
                 GestureState.IDLE -> stringResource(id = R.string.header_idle)
                 GestureState.ReadyForAction -> stringResource(id = R.string.header_pulling)
                 GestureState.InProgress -> stringResource(id = R.string.header_refreshing)

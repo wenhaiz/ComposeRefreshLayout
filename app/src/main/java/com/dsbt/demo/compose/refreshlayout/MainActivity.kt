@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
                         }
                     ) {
                         LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize()) {
-                            items(data) {
+                            items(data, key = { it }) {
                                 Text(
                                     text = "text $it",
                                     modifier = Modifier.padding(vertical = 12.dp)
