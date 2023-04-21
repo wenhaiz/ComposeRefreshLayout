@@ -25,21 +25,21 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun DefaultRefreshFooter(state: DragState.LoadMoreState, color: Color = Color(0xFF808080)) {
+fun DefaultRefreshFooter(state: ActionState.LoadingMoreState, color: Color = Color(0xFF808080)) {
     var text by remember {
         mutableStateOf("")
     }
-    val loadMoreGestureState = state.gestureState
+    val loadMoreGestureState = state.componentStatus
     val newText = when {
-        loadMoreGestureState == GestureState.Resetting -> ""
-        (loadMoreGestureState == GestureState.IDLE || loadMoreGestureState == GestureState.Dragging) && !state.hasMoreData -> stringResource(
+        loadMoreGestureState == ActionComponentStatus.Resetting -> ""
+        (loadMoreGestureState == ActionComponentStatus.IDLE || loadMoreGestureState == ActionComponentStatus.Dragging) && !state.hasMoreData -> stringResource(
             id = R.string.footer_no_more
         )
 
-        loadMoreGestureState == GestureState.InProgress -> stringResource(id = R.string.footer_refreshing)
-        loadMoreGestureState == GestureState.Success -> stringResource(id = R.string.footer_complete)
-        loadMoreGestureState == GestureState.Failed -> stringResource(id = R.string.footer_failed)
-        loadMoreGestureState == GestureState.ReadyForAction -> stringResource(id = R.string.footer_pulling)
+        loadMoreGestureState == ActionComponentStatus.ActionInProgress -> stringResource(id = R.string.footer_refreshing)
+        loadMoreGestureState == ActionComponentStatus.ActionSuccess -> stringResource(id = R.string.footer_complete)
+        loadMoreGestureState == ActionComponentStatus.ActionFailed -> stringResource(id = R.string.footer_failed)
+        loadMoreGestureState == ActionComponentStatus.ReadyForAction -> stringResource(id = R.string.footer_pulling)
         else -> stringResource(id = R.string.footer_idle)
     }
     if (newText.isNotEmpty()) {
@@ -54,15 +54,15 @@ fun DefaultRefreshFooter(state: DragState.LoadMoreState, color: Color = Color(0x
             modifier = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val loadMoreState = state.gestureState
+            val loadMoreState = state.componentStatus
             val agree =
-                if (loadMoreState == GestureState.ReadyForAction || loadMoreState == GestureState.InProgress) {
+                if (loadMoreState == ActionComponentStatus.ReadyForAction || loadMoreState == ActionComponentStatus.ActionInProgress) {
                     -90f
                 } else {
                     90f
                 }
             val rotation by animateFloatAsState(targetValue = agree)
-            if (loadMoreState == GestureState.InProgress) {
+            if (loadMoreState == ActionComponentStatus.ActionInProgress) {
                 androidx.compose.material.CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)

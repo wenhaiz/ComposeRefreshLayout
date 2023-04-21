@@ -14,20 +14,23 @@ import kotlin.math.absoluteValue
 
 private const val TAG = "RefreshLayoutState"
 
-enum class GestureState {
+/**
+ * A normal process is: IDLE -> Dragging -> ReadyForAction -> ActionInProgress -> ActionSuccess/ActionFailed -> Resetting -> IDLE
+ */
+enum class ActionComponentStatus {
     IDLE,
     Dragging,
     ReadyForAction,
-    InProgress,
-    Success,
-    Failed,
+    ActionInProgress,
+    ActionSuccess,
+    ActionFailed,
     Resetting;
 
     val isResetting: Boolean
         get() = this == Resetting
 
     val isFinishing: Boolean
-        get() = this == Success || this == Failed || this == Resetting
+        get() = this == ActionSuccess || this == ActionFailed || this == Resetting
 
     val isDragging: Boolean
         get() = this == Dragging
@@ -41,31 +44,28 @@ fun rememberRefreshLayoutState(): RefreshLayoutState {
     return remember { RefreshLayoutState() }
 }
 
-sealed class DragState constructor(
+sealed class ActionState constructor(
     private val _offsetY: State<Float>,
 ) {
-    internal var _gestureState: GestureState by mutableStateOf(GestureState.IDLE)
-    internal var _hasMoreData: Boolean by mutableStateOf(true)
+    var componentStatus: ActionComponentStatus by mutableStateOf(ActionComponentStatus.IDLE)
+        internal set
+    var hasMoreData: Boolean by mutableStateOf(true)
+        internal set
     internal var triggerDistancePx: Float = 0f
 
     abstract val dragProgress: Float
 
-    val gestureState: GestureState
-        get() = _gestureState
-    val hasMoreData: Boolean
-        get() = _hasMoreData
-
     val offsetY: Float
         get() = _offsetY.value
 
-    class RefreshState internal constructor(offsetY: State<Float>) : DragState(offsetY) {
+    class RefreshingState internal constructor(offsetY: State<Float>) : ActionState(offsetY) {
 
         override val dragProgress: Float
             get() = if (offsetY <= 0) 0f else (offsetY / triggerDistancePx).absoluteValue
 
     }
 
-    class LoadMoreState internal constructor(offsetY: State<Float>) : DragState(offsetY) {
+    class LoadingMoreState internal constructor(offsetY: State<Float>) : ActionState(offsetY) {
         override val dragProgress: Float
             get() = if (offsetY >= 0) 0f else (offsetY / triggerDistancePx).absoluteValue
 
@@ -79,31 +79,16 @@ sealed class DragState constructor(
  */
 class RefreshLayoutState {
 
-    internal var maxScrollUpPx = 0
-        private set
-    internal var maxScrollDownPx = 0
-        private set
+    internal val maxScrollUpPx: Float
+        get() = loadingMoreState.triggerDistancePx.absoluteValue + 100
 
-    internal var refreshTriggerPx: Int
-        set(value) {
-            dragState.triggerDistancePx = value.toFloat()
-            maxScrollDownPx = value + 100
-        }
-        get() = dragState.triggerDistancePx.toInt()
-
-
-    internal var loadMoreTriggerPx: Int
-        set(value) {
-            loadMoreState.triggerDistancePx = value.toFloat()
-            maxScrollUpPx = value.absoluteValue + 100
-        }
-        get() = loadMoreState.triggerDistancePx.toInt()
-
+    internal val maxScrollDownPx: Float
+        get() = refreshingState.triggerDistancePx + 100
 
     private val _offsetY = Animatable(0f)
 
-    val dragState = DragState.RefreshState(_offsetY.asState())
-    val loadMoreState = DragState.LoadMoreState(_offsetY.asState())
+    val refreshingState = ActionState.RefreshingState(_offsetY.asState())
+    val loadingMoreState = ActionState.LoadingMoreState(_offsetY.asState())
 
     private val mutatorMutex = MutatorMutex()
     val offsetY: Float
@@ -126,17 +111,17 @@ class RefreshLayoutState {
             val newValue = _offsetY.value + delta
             if (newValue > 0) {
                 //scroll down
-                if (newValue >= refreshTriggerPx && dragState._hasMoreData) {
-                    dragState._gestureState = GestureState.ReadyForAction
+                if (newValue >= refreshingState.triggerDistancePx && refreshingState.hasMoreData) {
+                    refreshingState.componentStatus = ActionComponentStatus.ReadyForAction
                 } else {
-                    dragState._gestureState = GestureState.Dragging
+                    refreshingState.componentStatus = ActionComponentStatus.Dragging
                 }
             } else if (newValue < 0) {
                 //scroll up
-                if (newValue.absoluteValue >= loadMoreTriggerPx && loadMoreState._hasMoreData) {
-                    loadMoreState._gestureState = GestureState.ReadyForAction
+                if (newValue.absoluteValue >= loadingMoreState.triggerDistancePx && loadingMoreState.hasMoreData) {
+                    loadingMoreState.componentStatus = ActionComponentStatus.ReadyForAction
                 } else {
-                    loadMoreState._gestureState = GestureState.Dragging
+                    loadingMoreState.componentStatus = ActionComponentStatus.Dragging
                 }
             }
             _offsetY.snapTo(newValue)
@@ -144,20 +129,20 @@ class RefreshLayoutState {
     }
 
     internal fun startRefresh() {
-        dragState._gestureState = GestureState.InProgress
+        refreshingState.componentStatus = ActionComponentStatus.ActionInProgress
     }
 
 
     internal fun startLoadMore() {
-        loadMoreState._gestureState = GestureState.InProgress
+        loadingMoreState.componentStatus = ActionComponentStatus.ActionInProgress
     }
 
     internal fun idle() {
-        if (dragState._gestureState != GestureState.IDLE) {
-            dragState._gestureState = GestureState.IDLE
+        if (refreshingState.componentStatus != ActionComponentStatus.IDLE) {
+            refreshingState.componentStatus = ActionComponentStatus.IDLE
         }
-        if (loadMoreState._gestureState != GestureState.IDLE) {
-            loadMoreState._gestureState = GestureState.IDLE
+        if (loadingMoreState.componentStatus != ActionComponentStatus.IDLE) {
+            loadingMoreState.componentStatus = ActionComponentStatus.IDLE
         }
     }
 
@@ -170,11 +155,11 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishLoadMore(success: Boolean, hasMoreData: Boolean, delay: Long = 1000) {
-        loadMoreState._gestureState =
-            if (success) GestureState.Success else GestureState.Failed
+        loadingMoreState.componentStatus =
+            if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
         delay(delay)
-        loadMoreState._gestureState = GestureState.Resetting
-        loadMoreState._hasMoreData = hasMoreData
+        loadingMoreState.componentStatus = ActionComponentStatus.Resetting
+        loadingMoreState.hasMoreData = hasMoreData
     }
 
     /**
@@ -185,13 +170,13 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishRefresh(success: Boolean, hasMoreData: Boolean = true, delay: Long = 1000) {
-        dragState._gestureState =
-            if (success) GestureState.Success else GestureState.Failed
+        refreshingState.componentStatus =
+            if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
         delay(delay)
-        dragState._gestureState = GestureState.Resetting
-        dragState._hasMoreData = hasMoreData
+        refreshingState.componentStatus = ActionComponentStatus.Resetting
+        refreshingState.hasMoreData = hasMoreData
         //FIXME:This may be tricky
-        loadMoreState._hasMoreData = hasMoreData
+        loadingMoreState.hasMoreData = hasMoreData
     }
 
 }

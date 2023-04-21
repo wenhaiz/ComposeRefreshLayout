@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DefaultRefreshHeader(
-    state: DragState.RefreshState,
+    state: ActionState.RefreshingState,
     color: Color = Color(0xFF808080)
 ) {
     Box(
@@ -37,7 +37,7 @@ fun DefaultRefreshHeader(
             .fillMaxWidth()
     ) {
         val agree =
-            if (state.gestureState == GestureState.ReadyForAction || state.gestureState == GestureState.InProgress) {
+            if (state.componentStatus == ActionComponentStatus.ReadyForAction || state.componentStatus == ActionComponentStatus.ActionInProgress) {
                 90f
             } else {
                 -90f
@@ -49,7 +49,7 @@ fun DefaultRefreshHeader(
                 .fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state.gestureState == GestureState.InProgress) {
+            if (state.componentStatus == ActionComponentStatus.ActionInProgress) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -57,7 +57,7 @@ fun DefaultRefreshHeader(
                     color = color,
                     strokeWidth = 2.dp
                 )
-            } else if (!state.gestureState.isFinishing) {
+            } else if (!state.componentStatus.isFinishing) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_arrow_left),
                     contentDescription = "", modifier = Modifier
@@ -73,12 +73,12 @@ fun DefaultRefreshHeader(
             var headerText by remember {
                 mutableStateOf("")
             }
-            val text = when (state.gestureState) {
-                GestureState.IDLE -> stringResource(id = R.string.header_idle)
-                GestureState.ReadyForAction -> stringResource(id = R.string.header_pulling)
-                GestureState.InProgress -> stringResource(id = R.string.header_refreshing)
-                GestureState.Success -> stringResource(id = R.string.header_complete)
-                GestureState.Failed -> stringResource(id = R.string.header_failed)
+            val text = when (state.componentStatus) {
+                ActionComponentStatus.IDLE -> stringResource(id = R.string.header_idle)
+                ActionComponentStatus.ReadyForAction -> stringResource(id = R.string.header_pulling)
+                ActionComponentStatus.ActionInProgress -> stringResource(id = R.string.header_refreshing)
+                ActionComponentStatus.ActionSuccess -> stringResource(id = R.string.header_complete)
+                ActionComponentStatus.ActionFailed -> stringResource(id = R.string.header_failed)
                 else -> ""
             }
             if (headerText != text && text.isNotEmpty()) {
