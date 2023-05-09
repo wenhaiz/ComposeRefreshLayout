@@ -2,6 +2,8 @@ package com.dsbt.lib.composerefreshlayout
 
 import android.util.Log
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatorMutex
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -177,6 +179,17 @@ class RefreshLayoutState {
         refreshingState.hasMoreData = hasMoreData
         //FIXME:This may be tricky
         loadingMoreState.hasMoreData = hasMoreData
+    }
+
+
+    suspend fun refresh(animationSpec: AnimationSpec<Float> = spring()) {
+        _offsetY.animateTo(refreshingState.triggerDistancePx, animationSpec = animationSpec)
+        startRefresh()
+    }
+
+    suspend fun loadMore(animationSpec: AnimationSpec<Float> = spring()) {
+        _offsetY.animateTo(-loadingMoreState.triggerDistancePx, animationSpec = animationSpec)
+        startLoadMore()
     }
 
 }

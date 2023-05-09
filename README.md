@@ -2,9 +2,11 @@
 
 [![](https://jitpack.io/v/wenhaiz/ComposeRefreshLayout.svg)](https://jitpack.io/#wenhaiz/ComposeRefreshLayout)
 
-An Android [Compose](https://developer.android.com/jetpack/compose) component which supports refreshing and loading more data.
+An Android [Compose](https://developer.android.com/jetpack/compose) component which supports
+refreshing and loading more data.
 
 ## Sample
+
 ![](/media/sample.gif)
 
 ## Usage
@@ -75,12 +77,18 @@ RefreshLayout(
 After refreshing or loading more, you should call `state.finishRefresh()`
 or `state.finishLoadMore()` to finish the refresh or load more action.
 
-## Customize
-By default, `RefreshLayout` uses `DefaultRefreshHeader` and `DefaultRefreshFooter` as header and footer.
-You can customize them by passing your own header and footer.
-You can define the behavior of header and footer depends on the state of `ActionState.RefreshingState` or `ActionState.LoadingMoreState`.
+To refresh and load more programmatically, you can call `state.refresh()` or `state.loadMore()` and
+pass an animationSpec to control the animation.
 
-For example:  
+## Customize
+
+By default, `RefreshLayout` uses `DefaultRefreshHeader` and `DefaultRefreshFooter` as header and
+footer.
+You can customize them by passing your own header and footer.
+You can define the behavior of header and footer depends on the state
+of `ActionState.RefreshingState` or `ActionState.LoadingMoreState`.
+
+For example:
 
 ```kotlin
 @Composable
@@ -111,7 +119,6 @@ fun DefaultRefreshHeader(state: ActionState.RefreshingState) {
 }
 ```
 
-
-
 # TODO
-- Cover more cases
+- Support NestedScrolling in Android `View`
+- Refine gesture handling
