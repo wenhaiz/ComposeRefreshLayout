@@ -28,28 +28,16 @@ class RefreshNestedScrollConnection(
     }
 
     private fun onPreScroll(available: Offset): Offset {
-        return if (available.y < 0) {
-            if (state.offsetY > 0 && enableRefresh) {
-                val y = available.y
-                val newOffsetY = (state.offsetY + y).coerceAtLeast(0f)
-                val delta = newOffsetY - state.offsetY
-                onScroll(delta)
-                Offset(0f, delta)
-            } else {
-                Offset.Zero
-            }
-        } else {
-            if (state.offsetY < 0) {
-                val y = available.y
-                val newOffsetY = (state.offsetY + y).coerceAtMost(0f)
-                val delta = newOffsetY - state.offsetY
-                onScroll(delta)
-                Offset(0f, delta)
-            } else {
-                Offset.Zero
-            }
+        val scrollUp = available.y < 0 && state.offsetY > 0 && enableRefresh
+        val scrollDown = available.y > 0 && state.offsetY < 0 && enableLoadMore
+        if (!scrollUp && !scrollDown) {
+            return Offset.Zero
         }
-
+        val y = available.y
+        val newOffsetY = (state.offsetY + y).coerceAtLeast(0f)
+        val delta = newOffsetY - state.offsetY
+        onScroll(delta)
+        return Offset(0f, delta)
     }
 
 
