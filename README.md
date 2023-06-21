@@ -1,6 +1,7 @@
 # ComposeRefreshLayout
 
 [![](https://jitpack.io/v/wenhaiz/ComposeRefreshLayout.svg)](https://jitpack.io/#wenhaiz/ComposeRefreshLayout)
+[![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
 
 An Android [Compose](https://developer.android.com/jetpack/compose) component which supports
 refreshing and loading more data.
