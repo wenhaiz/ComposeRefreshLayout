@@ -48,7 +48,7 @@ fun DefaultRefreshFooter(state: ActionState.LoadingMoreState, color: Color = Col
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(56.dp)
     ) {
         Row(
             modifier = Modifier.align(Alignment.Center),

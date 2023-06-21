@@ -33,7 +33,7 @@ fun DefaultRefreshHeader(
 ) {
     Box(
         modifier = Modifier
-            .height(80.dp)
+            .height(56.dp)
             .fillMaxWidth()
     ) {
         val agree =
