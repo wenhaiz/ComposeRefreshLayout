@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
+private const val TAG = "RefreshNestedScrollConn"
 
 class RefreshNestedScrollConnection(
     val state: RefreshLayoutState,
@@ -34,7 +35,12 @@ class RefreshNestedScrollConnection(
             return Offset.Zero
         }
         val y = available.y
-        val newOffsetY = (state.offsetY + y).coerceAtLeast(0f)
+        var newOffsetY = (state.offsetY + y)
+        newOffsetY = if (state.offsetY > 0) {
+            newOffsetY.coerceAtLeast(0f)
+        } else {
+            newOffsetY.coerceAtMost(0f)
+        }
         val delta = newOffsetY - state.offsetY
         onScroll(delta)
         return Offset(0f, delta)

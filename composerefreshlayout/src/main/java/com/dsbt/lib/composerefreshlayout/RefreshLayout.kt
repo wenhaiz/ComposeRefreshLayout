@@ -33,7 +33,7 @@ private const val TAG = "RefreshLayout"
  * When the content is pulled down, the header will be displayed, and when the content is pulled up,
  * the footer will be displayed.
  *
- * Thanks to Github Copilot to generate this comment :)
+ * Thanks Github Copilot for helping me write this comment :)
  *
  *
  * @param state The state of the refresh layout. You can use [rememberRefreshLayoutState] to create one.

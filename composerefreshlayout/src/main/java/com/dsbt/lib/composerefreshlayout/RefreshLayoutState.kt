@@ -60,6 +60,10 @@ sealed class ActionState constructor(
     val offsetY: Float
         get() = _offsetY.value
 
+    override fun toString(): String {
+        return "ActionState(offsetY=$offsetY, componentStatus=$componentStatus, hasMoreData=$hasMoreData, triggerDistancePx=$triggerDistancePx)"
+    }
+
     class RefreshingState internal constructor(offsetY: State<Float>) : ActionState(offsetY) {
 
         override val dragProgress: Float
@@ -87,6 +91,9 @@ class RefreshLayoutState {
     internal val maxScrollDownPx: Float
         get() = refreshingState.triggerDistancePx + 100
 
+    /**
+     * The current offset of the refresh indicator.
+     */
     private val _offsetY = Animatable(0f)
 
     val refreshingState = ActionState.RefreshingState(_offsetY.asState())
