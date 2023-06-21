@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 
 private const val TAG = "RefreshLayout"
@@ -65,6 +67,8 @@ fun RefreshLayout(
     onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     contentScrollState: ScrollableState? = null,
+    //For some special cases, you may need to set the padding of the footer to make it float on the content(there may be something cover the footer).
+    footerPaddingBottom: Dp = Dp.Unspecified,
     content: @Composable BoxScope.(RefreshLayoutState) -> Unit,
 ) {
     var headerHeight by remember { mutableStateOf(0) }
@@ -75,7 +79,7 @@ fun RefreshLayout(
             state = state,
             coroutineScope = coroutineScope,
             enableRefresh = enableRefresh,
-            enableLoadMore = enableLoadMore
+            enableLoadMore = enableLoadMore,
         )
     }.apply {
         this.enableRefresh = enableRefresh
@@ -153,9 +157,11 @@ fun RefreshLayout(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset {
-                    //Hide the header by moving it off the screen
-                    IntOffset(0, -headerHeight)
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) {
+                        placeable.placeRelative(0, -placeable.height)
+                    }
                 }
                 .graphicsLayer {
                     //translate the header by the offset if we are refreshing (scrolling down)
@@ -169,13 +175,27 @@ fun RefreshLayout(
         ) {
             header(state.refreshingState)
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset {
-                    //Hide the footer by moving it off the screen
-                    IntOffset(0, footerHeight)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .offset {
+                //Move the content by the offset
+                IntOffset(0, state.offsetY.toInt())
+            }) {
+            content(state)
+        }
+        var footerModifier = Modifier
+            .fillMaxWidth()
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) {
+                    placeable.placeRelative(0, placeable.height)
                 }
+            }
+        if (footerPaddingBottom != Dp.Unspecified) {
+            footerModifier = footerModifier.offset(y = -footerPaddingBottom)
+        }
+        Box(
+            modifier = footerModifier
                 .graphicsLayer {
                     //translate the footer by the offset if we are loading more (scrolling up)
                     val y = if (state.offsetY < 0) state.offsetY else 0f
@@ -188,14 +208,6 @@ fun RefreshLayout(
                 .align(Alignment.BottomCenter)
         ) {
             footer(state.loadingMoreState)
-        }
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .offset {
-                //Move the content by the offset
-                IntOffset(0, state.offsetY.toInt())
-            }) {
-            content(state)
         }
     }
 }
