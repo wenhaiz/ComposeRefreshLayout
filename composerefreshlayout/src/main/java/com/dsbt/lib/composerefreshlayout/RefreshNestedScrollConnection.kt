@@ -14,7 +14,7 @@ class RefreshNestedScrollConnection(
     val state: RefreshLayoutState,
     val coroutineScope: CoroutineScope,
     var enableRefresh: Boolean,
-    var enableLoadMore: Boolean,
+    var enableLoadMore: Boolean
 ) : NestedScrollConnection {
 
     private val defaultMultiplier = 1f
