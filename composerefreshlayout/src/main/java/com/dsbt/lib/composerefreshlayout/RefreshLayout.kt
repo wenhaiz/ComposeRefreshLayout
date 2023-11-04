@@ -1,6 +1,5 @@
 package com.dsbt.lib.composerefreshlayout
 
-import android.util.Log
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
@@ -25,6 +24,9 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.roundToInt
 
 private const val TAG = "RefreshLayout"
 
@@ -88,13 +90,22 @@ fun RefreshLayout(
     LaunchedEffect(state.refreshingState) {
         snapshotFlow {
             state.refreshingState.componentStatus
-        }.collect {
-            Log.d(TAG, "RefreshLayout: refreshState $it ")
+        }.collectLatest {
             if (it == ActionComponentStatus.ActionInProgress) {
                 onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
             } else if (it.isResetting) {
-                state.animateOffsetTo(0f)
+                val stateOffsetY = state.offsetY
+                val d1 = async {
+                    if (stateOffsetY != 0f) {
+                        contentScrollState?.animateScrollBy(-stateOffsetY)
+                    }
+                }
+                val d2 = async {
+                    state.animateOffsetTo(0f)
+                }
+                d1.await()
+                d2.await()
                 state.idle()
             } else if (it == ActionComponentStatus.IDLE) {
                 state.animateOffsetTo(0f)
@@ -104,47 +115,25 @@ fun RefreshLayout(
     LaunchedEffect(state.loadingMoreState) {
         snapshotFlow {
             state.loadingMoreState.componentStatus
-        }.collect {
-            Log.d(TAG, "RefreshLayout: loadMoreState $it")
+        }.collectLatest {
             if (it == ActionComponentStatus.ActionInProgress) {
                 onLoadMore()
                 state.animateOffsetTo(-footerHeight.toFloat())
             } else if (it.isResetting) {
-                state.animateOffsetTo(0f)
+                val stateOffsetY = state.offsetY
+                val d1 = async {
+                    if (stateOffsetY != 0f) {
+                        contentScrollState?.animateScrollBy(-stateOffsetY)
+                    }
+                }
+                val d2 = async {
+                    state.animateOffsetTo(0f)
+                }
+                d1.await()
+                d2.await()
                 state.idle()
             } else if (it == ActionComponentStatus.IDLE) {
                 state.animateOffsetTo(0f)
-            }
-        }
-    }
-    var stateOffsetY = remember {
-        0f
-    }
-    LaunchedEffect(state) {
-        snapshotFlow {
-            Pair(state.offsetY, state.loadingMoreState.componentStatus)
-        }.collect {
-            if (state.loadingMoreState.componentStatus == ActionComponentStatus.ActionSuccess || state.loadingMoreState.componentStatus == ActionComponentStatus.ActionFailed) {
-                stateOffsetY = it.first
-                Log.d(TAG, "RefreshLayout: offsetY ${it.first}")
-            } else if (it.second == ActionComponentStatus.Resetting) {
-                if (stateOffsetY != 0f) {
-                    contentScrollState?.animateScrollBy(-stateOffsetY)
-                }
-            }
-        }
-    }
-    LaunchedEffect(state) {
-        snapshotFlow {
-            Pair(state.offsetY, state.refreshingState.componentStatus)
-        }.collect {
-            if (state.refreshingState.componentStatus == ActionComponentStatus.ActionSuccess || state.refreshingState.componentStatus == ActionComponentStatus.ActionFailed) {
-                stateOffsetY = it.first
-                Log.d(TAG, "RefreshLayout: offsetY ${it.first}")
-            } else if (it.second == ActionComponentStatus.Resetting) {
-                if (stateOffsetY != 0f) {
-                    contentScrollState?.animateScrollBy(-stateOffsetY)
-                }
             }
         }
     }
@@ -154,6 +143,7 @@ fun RefreshLayout(
             .clipToBounds()
             .nestedScroll(conn)
     ) {
+        //header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -165,8 +155,7 @@ fun RefreshLayout(
                 }
                 .graphicsLayer {
                     //translate the header by the offset if we are refreshing (scrolling down)
-                    val y = if (state.offsetY > 0) state.offsetY else 0f
-                    translationY = y
+                    translationY = if (state.offsetY > 0) state.offsetY else 0f
                 }
                 .onSizeChanged {
                     state.refreshingState.triggerDistancePx = it.height.toFloat()
@@ -175,31 +164,29 @@ fun RefreshLayout(
         ) {
             header(state.refreshingState)
         }
+        //content
         Box(modifier = Modifier
             .fillMaxSize()
             .offset {
                 //Move the content by the offset
-                IntOffset(0, state.offsetY.toInt())
+                IntOffset(0, state.offsetY.roundToInt())
             }) {
             content(state)
         }
-        var footerModifier = Modifier
-            .fillMaxWidth()
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                layout(placeable.width, placeable.height) {
-                    placeable.placeRelative(0, placeable.height)
-                }
-            }
-        if (footerPaddingBottom != Dp.Unspecified) {
-            footerModifier = footerModifier.offset(y = -footerPaddingBottom)
-        }
+        //footer
         Box(
-            modifier = footerModifier
+            modifier = Modifier
+                .fillMaxWidth()
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) {
+                        placeable.placeRelative(0, placeable.height)
+                    }
+                }
+                .then(if (footerPaddingBottom != Dp.Unspecified) Modifier.offset(y = -footerPaddingBottom) else Modifier)
                 .graphicsLayer {
                     //translate the footer by the offset if we are loading more (scrolling up)
-                    val y = if (state.offsetY < 0) state.offsetY else 0f
-                    translationY = y
+                    translationY = if (state.offsetY < 0) state.offsetY else 0f
                 }
                 .onSizeChanged {
                     state.loadingMoreState.triggerDistancePx = it.height.toFloat()

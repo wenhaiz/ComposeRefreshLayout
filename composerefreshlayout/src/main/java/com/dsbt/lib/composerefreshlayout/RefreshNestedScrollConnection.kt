@@ -1,5 +1,6 @@
 package com.dsbt.lib.composerefreshlayout
 
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -23,27 +24,36 @@ class RefreshNestedScrollConnection(
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         return when {
             source != NestedScrollSource.Drag -> Offset.Zero
-//            state.isRefreshing.isRefreshing || state.isLoadingMore.isLoadingMore -> Offset.Zero
-            else -> onPreScroll(available)
+//            state.refreshingState.componentStatus.shouldRejectScroll|| state.loadingMoreState.componentStatus.shouldRejectScroll -> Offset.Zero
+            else -> handlePreScroll(available)
         }
     }
 
-    private fun onPreScroll(available: Offset): Offset {
-        val scrollUp = available.y < 0 && state.offsetY > 0 && enableRefresh
-        val scrollDown = available.y > 0 && state.offsetY < 0 && enableLoadMore
-        if (!scrollUp && !scrollDown) {
+    /**
+     * cases to handle:
+     * scroll up when refreshing
+     * scroll down when loading more
+     */
+    private fun handlePreScroll(available: Offset): Offset {
+        val scrollUpWhenRefreshing = available.y < 0 && state.offsetY > 0 && enableRefresh
+        val scrollDownWhenLoading = available.y > 0 && state.offsetY < 0 && enableLoadMore
+        val needHandle = scrollUpWhenRefreshing || scrollDownWhenLoading
+        Log.d(TAG, "handleScroll[Pre]: available = $available,needHandle=$needHandle")
+        if (!needHandle) {
             return Offset.Zero
         }
         val y = available.y
-        var newOffsetY = (state.offsetY + y)
+        var newOffsetY = state.offsetY + y
         newOffsetY = if (state.offsetY > 0) {
+            //in refreshing process
             newOffsetY.coerceAtLeast(0f)
         } else {
+            //in loading process
             newOffsetY.coerceAtMost(0f)
         }
-        val delta = newOffsetY - state.offsetY
-        onScroll(delta)
-        return Offset(0f, delta)
+        val consumedY = newOffsetY - state.offsetY
+        dispatchScroll(consumedY)
+        return Offset(0f, consumedY)
     }
 
 
@@ -52,25 +62,36 @@ class RefreshNestedScrollConnection(
         available: Offset,
         source: NestedScrollSource
     ): Offset {
+        Log.d(
+            TAG,
+            "onPostScroll:available = $available,refreshingState=${state.refreshingState.componentStatus},loadingMoreState=${state.loadingMoreState.componentStatus} "
+        )
         return when {
             source != NestedScrollSource.Drag -> Offset.Zero
-            state.refreshingState.componentStatus == ActionComponentStatus.ActionInProgress || state.loadingMoreState.componentStatus == ActionComponentStatus.ActionInProgress -> Offset.Zero
-            else -> onPostScroll(available)
+            available.y > 0 && state.refreshingState.componentStatus.shouldRejectScroll -> Offset.Zero
+            available.y < 0 && state.loadingMoreState.componentStatus.shouldRejectScroll -> Offset.Zero
+            else -> handlePostScroll(available)
         }
 
     }
 
-    private fun onPostScroll(available: Offset): Offset {
-        if (available.y > 0 && !enableRefresh) {
-            return Offset.Zero
-        }
-        if (available.y < 0 && !enableLoadMore) {
+    /**
+     * cases to handle:
+     * scroll down when refreshing
+     * scroll up when loading more
+     */
+    private fun handlePostScroll(available: Offset): Offset {
+        val canRefresh = available.y > 0 && enableRefresh
+        val canLoadMore = available.y < 0 && enableLoadMore
+        val needHandle = canRefresh || canLoadMore
+        Log.d(TAG, "handleScroll[Post]: available = $available,needHandle=$needHandle")
+        if (!needHandle) {
             return Offset.Zero
         }
         val y = available.y * multiplier
         val newOffsetY = state.offsetY + y
         val delta = newOffsetY - state.offsetY
-        onScroll(delta)
+        dispatchScroll(delta)
         updateMultiplier(if (available.y > 0) 1 else -1)
         return Offset(0f, available.y)
     }
@@ -82,18 +103,31 @@ class RefreshNestedScrollConnection(
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        if (state.refreshingState.componentStatus == ActionComponentStatus.ReadyForAction && state.refreshingState.hasMoreData) {
-            state.startRefresh()
-        } else if (state.loadingMoreState.componentStatus == ActionComponentStatus.ReadyForAction && state.loadingMoreState.hasMoreData) {
-            state.startLoadMore()
-        } else {
-            state.idle()
-        }
+        Log.d(TAG, "onPreFling: available = $available")
         multiplier = defaultMultiplier
-        return Velocity.Zero
+        return when {
+            state.refreshingState.componentStatus == ActionComponentStatus.ReadyForAction && state.refreshingState.hasMoreData -> {
+                state.startRefresh()
+                Velocity.Zero
+            }
+
+            state.loadingMoreState.componentStatus == ActionComponentStatus.ReadyForAction && state.loadingMoreState.hasMoreData -> {
+                state.startLoadMore()
+                Velocity.Zero
+            }
+
+            state.refreshingState.componentStatus.shouldRejectScroll || state.loadingMoreState.componentStatus.shouldRejectScroll -> {
+                available
+            }
+
+            else -> {
+                state.idle()
+                Velocity.Zero
+            }
+        }
     }
 
-    private fun onScroll(delta: Float) {
+    private fun dispatchScroll(delta: Float) {
         coroutineScope.launch {
             state.dispatchScrollDelta(delta)
         }

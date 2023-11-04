@@ -34,8 +34,11 @@ enum class ActionComponentStatus {
     val isFinishing: Boolean
         get() = this == ActionSuccess || this == ActionFailed || this == Resetting
 
-    val isDragging: Boolean
-        get() = this == Dragging
+    val canAcceptScroll: Boolean
+        get() = this == IDLE || this == Dragging || this == ReadyForAction
+
+    val shouldRejectScroll: Boolean
+        get() = this == ActionInProgress || this == ActionSuccess || this == ActionFailed || this == Resetting
 }
 
 /**
@@ -50,7 +53,7 @@ sealed class ActionState constructor(
     private val _offsetY: State<Float>,
 ) {
     var componentStatus: ActionComponentStatus by mutableStateOf(ActionComponentStatus.IDLE)
-        internal set
+        private set
     var hasMoreData: Boolean by mutableStateOf(true)
         internal set
     internal var triggerDistancePx: Float = 0f
@@ -75,6 +78,17 @@ sealed class ActionState constructor(
         override val dragProgress: Float
             get() = if (offsetY >= 0) 0f else (offsetY / triggerDistancePx).absoluteValue
 
+    }
+
+    internal fun updateComponentStatus(status: ActionComponentStatus) {
+        if (status == componentStatus) {
+            return
+        }
+        Log.d(
+            TAG,
+            "${this.javaClass.simpleName} updateComponentStatus:$componentStatus -> $status "
+        )
+        componentStatus = status
     }
 
 }
@@ -112,49 +126,61 @@ class RefreshLayoutState {
     }
 
     internal suspend fun dispatchScrollDelta(delta: Float) {
-        if (delta == 0f) {
+        if (delta.absoluteValue < 0.001f) {
             return
         }
         mutatorMutex.mutate {
-            Log.d(TAG, "dispatchScrollDelta: delta=$delta")
-            val newValue = _offsetY.value + delta
-            if (newValue > 0) {
+            var newOffsetY = _offsetY.value + delta
+            Log.d(TAG, "dispatchScrollDelta: delta=$delta,newOffsetY=$newOffsetY")
+            if (newOffsetY > 0) {
                 //scroll down
-                if (newValue >= refreshingState.triggerDistancePx && refreshingState.hasMoreData) {
-                    refreshingState.componentStatus = ActionComponentStatus.ReadyForAction
+                if (newOffsetY >= refreshingState.triggerDistancePx && refreshingState.hasMoreData) {
+                    refreshingState.updateComponentStatus(ActionComponentStatus.ReadyForAction)
                 } else {
-                    refreshingState.componentStatus = ActionComponentStatus.Dragging
+                    refreshingState.updateComponentStatus(ActionComponentStatus.Dragging)
                 }
-            } else if (newValue < 0) {
+                newOffsetY = newOffsetY.coerceAtMost(refreshingState.triggerDistancePx + 20f)
+            } else if (newOffsetY < 0) {
                 //scroll up
-                if (newValue.absoluteValue >= loadingMoreState.triggerDistancePx && loadingMoreState.hasMoreData) {
-                    loadingMoreState.componentStatus = ActionComponentStatus.ReadyForAction
+                if (newOffsetY.absoluteValue >= loadingMoreState.triggerDistancePx && loadingMoreState.hasMoreData) {
+                    loadingMoreState.updateComponentStatus(ActionComponentStatus.ReadyForAction)
                 } else {
-                    loadingMoreState.componentStatus = ActionComponentStatus.Dragging
+                    loadingMoreState.updateComponentStatus(ActionComponentStatus.Dragging)
                 }
+                newOffsetY = newOffsetY.coerceAtLeast(-loadingMoreState.triggerDistancePx - 20f)
             }
-            _offsetY.snapTo(newValue)
+            _offsetY.snapTo(newOffsetY)
         }
     }
 
     internal fun startRefresh() {
-        refreshingState.componentStatus = ActionComponentStatus.ActionInProgress
+        refreshingState.updateComponentStatus(ActionComponentStatus.ActionInProgress)
     }
 
 
     internal fun startLoadMore() {
-        loadingMoreState.componentStatus = ActionComponentStatus.ActionInProgress
+        loadingMoreState.updateComponentStatus(ActionComponentStatus.ActionInProgress)
     }
 
     internal fun idle() {
         if (refreshingState.componentStatus != ActionComponentStatus.IDLE) {
-            refreshingState.componentStatus = ActionComponentStatus.IDLE
+            refreshingState.updateComponentStatus(ActionComponentStatus.IDLE)
         }
         if (loadingMoreState.componentStatus != ActionComponentStatus.IDLE) {
-            loadingMoreState.componentStatus = ActionComponentStatus.IDLE
+            loadingMoreState.updateComponentStatus(ActionComponentStatus.IDLE)
         }
     }
 
+
+    data class RefreshResult(
+        val success: Boolean,
+        val hasMoreData: Boolean = true,
+        val delayToSettling: Long = 1000
+    )
+
+    suspend fun finishRefresh(result: RefreshResult) {
+        finishRefresh(result.success, result.hasMoreData, result.delayToSettling)
+    }
 
     /**
      * Finish load more
@@ -164,11 +190,24 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishLoadMore(success: Boolean, hasMoreData: Boolean, delay: Long = 1000) {
-        loadingMoreState.componentStatus =
-            if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
-        delay(delay)
-        loadingMoreState.componentStatus = ActionComponentStatus.Resetting
+        if (loadingMoreState.componentStatus == ActionComponentStatus.ActionInProgress) {
+            loadingMoreState.updateComponentStatus(
+                if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
+            )
+            delay(delay)
+            loadingMoreState.updateComponentStatus(ActionComponentStatus.Resetting)
+        }
         loadingMoreState.hasMoreData = hasMoreData
+    }
+
+    data class LoadMoreResult(
+        val success: Boolean,
+        val hasMoreData: Boolean,
+        val delayToSettling: Long = 1000
+    )
+
+    suspend fun finishLoadMore(result: LoadMoreResult) {
+        finishLoadMore(result.success, result.hasMoreData, result.delayToSettling)
     }
 
     /**
@@ -179,10 +218,13 @@ class RefreshLayoutState {
      * @param delay Duration of the result message display
      */
     suspend fun finishRefresh(success: Boolean, hasMoreData: Boolean = true, delay: Long = 1000) {
-        refreshingState.componentStatus =
-            if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
-        delay(delay)
-        refreshingState.componentStatus = ActionComponentStatus.Resetting
+        if (refreshingState.componentStatus == ActionComponentStatus.ActionInProgress) {
+            refreshingState.updateComponentStatus(
+                if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
+            )
+            delay(delay)
+            refreshingState.updateComponentStatus(ActionComponentStatus.Resetting)
+        }
         refreshingState.hasMoreData = hasMoreData
         //FIXME:This may be tricky
         loadingMoreState.hasMoreData = hasMoreData
