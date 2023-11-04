@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,22 +16,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import com.dsbt.demo.compose.refreshlayout.ui.theme.RefreshLayoutComposeTheme
 import com.dsbt.lib.composerefreshlayout.DefaultRefreshFooter
 import com.dsbt.lib.composerefreshlayout.DefaultRefreshHeader
 import com.dsbt.lib.composerefreshlayout.RefreshLayout
 import com.dsbt.lib.composerefreshlayout.RefreshLayoutState
+import com.dsbt.lib.composerefreshlayout.RefreshLayoutState.LoadMoreResult
 import com.dsbt.lib.composerefreshlayout.rememberRefreshLayoutState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             RefreshLayoutComposeTheme {
                 // A surface container using the 'background' color from the theme
@@ -50,15 +52,23 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Box {
+                    Box(
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .statusBarsPadding()
+                    ) {
                         RefreshLayout(
                             state = state,
                             contentScrollState = lazyListState,
                             onRefresh = {
-                                refresh(scope, state)
+                                scope.launch {
+                                    refresh(state)
+                                }
                             },
                             onLoadMore = {
-                                loadMore(scope, state)
+                                scope.launch {
+                                    loadMore(state)
+                                }
                             },
                             enableLoadMore = true,
                             enableRefresh = true,
@@ -67,7 +77,7 @@ class MainActivity : ComponentActivity() {
                             },
                             footer = {
                                 DefaultRefreshFooter(state = it)
-                            }
+                            },
                         ) {
                             LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize()) {
                                 items(data, key = { it }) {
@@ -107,46 +117,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun loadMore(
-        scope: CoroutineScope,
+    private suspend fun loadMore(
         state: RefreshLayoutState
     ) {
-        scope.launch {
-            delay(1000)
-            if (cursor < 100) {
-                val newCur = cursor + 10
-                data = data + (cursor until newCur).map { it }
-                cursor = newCur
-            }
-            state.finishLoadMore(success = true, hasMoreData = cursor < 100)
+        delay(2000)
+        val hasMore = cursor < 100
+        if (hasMore) {
+            val newCur = cursor + 10
+            data = data + (cursor until newCur).map { it }
+            cursor = newCur
         }
+        state.finishLoadMore(success = true, hasMoreData = cursor < 100)
     }
 
-    private fun refresh(
-        scope: CoroutineScope,
+    private suspend fun refresh(
         state: RefreshLayoutState
     ) {
-        scope.launch {
-            delay(1000)
-            cursor = 10
-            data = (0 until cursor).map { it }
-            state.finishRefresh(success = true)
-        }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RefreshLayoutComposeTheme {
-        Greeting("Android")
+        delay(2000)
+        cursor = 10
+        data = (0 until cursor).map { it }
+        state.finishRefresh(success = false, hasMoreData = true)
     }
 }
