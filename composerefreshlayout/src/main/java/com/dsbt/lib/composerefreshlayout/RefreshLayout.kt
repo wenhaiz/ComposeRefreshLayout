@@ -1,5 +1,6 @@
 package com.dsbt.lib.composerefreshlayout
 
+import android.util.Log
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
@@ -91,22 +92,25 @@ fun RefreshLayout(
         snapshotFlow {
             state.refreshingState.componentStatus
         }.collectLatest {
+            Log.d(TAG, "RefreshLayout: refreshingState = $it")
             if (it == ActionComponentStatus.ActionInProgress) {
                 onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
             } else if (it.isResetting) {
                 val stateOffsetY = state.offsetY
-                val d1 = async {
-                    if (stateOffsetY != 0f) {
-                        contentScrollState?.animateScrollBy(-stateOffsetY)
-                    }
-                }
                 val d2 = async {
                     state.animateOffsetTo(0f)
+                    state.idle()
+                }
+                val d1 = async {
+                    if (stateOffsetY != 0f && contentScrollState?.isScrollInProgress != true) {
+                        Log.d(TAG, "RefreshLayout: contentScrollState scroll start")
+                        contentScrollState?.animateScrollBy(-stateOffsetY)
+                        Log.d(TAG, "RefreshLayout:contentScrollState scroll done ")
+                    }
                 }
                 d1.await()
                 d2.await()
-                state.idle()
             } else if (it == ActionComponentStatus.IDLE) {
                 state.animateOffsetTo(0f)
             }
@@ -121,17 +125,17 @@ fun RefreshLayout(
                 state.animateOffsetTo(-footerHeight.toFloat())
             } else if (it.isResetting) {
                 val stateOffsetY = state.offsetY
+                val d2 = async {
+                    state.animateOffsetTo(0f)
+                    state.idle()
+                }
                 val d1 = async {
-                    if (stateOffsetY != 0f) {
+                    if (stateOffsetY != 0f && contentScrollState?.isScrollInProgress != true) {
                         contentScrollState?.animateScrollBy(-stateOffsetY)
                     }
                 }
-                val d2 = async {
-                    state.animateOffsetTo(0f)
-                }
-                d1.await()
                 d2.await()
-                state.idle()
+                d1.await()
             } else if (it == ActionComponentStatus.IDLE) {
                 state.animateOffsetTo(0f)
             }
