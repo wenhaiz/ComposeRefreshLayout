@@ -94,8 +94,8 @@ fun RefreshLayout(
         }.collectLatest {
             Log.d(TAG, "RefreshLayout: refreshingState = $it")
             if (it == ActionComponentStatus.ActionInProgress) {
-                onRefresh()
                 state.animateOffsetTo(headerHeight.toFloat())
+                onRefresh()
             } else if (it.isResetting) {
                 val stateOffsetY = state.offsetY
                 val d2 = async {
@@ -121,8 +121,8 @@ fun RefreshLayout(
             state.loadingMoreState.componentStatus
         }.collectLatest {
             if (it == ActionComponentStatus.ActionInProgress) {
-                onLoadMore()
                 state.animateOffsetTo(-footerHeight.toFloat())
+                onLoadMore()
             } else if (it.isResetting) {
                 val stateOffsetY = state.offsetY
                 val d2 = async {
