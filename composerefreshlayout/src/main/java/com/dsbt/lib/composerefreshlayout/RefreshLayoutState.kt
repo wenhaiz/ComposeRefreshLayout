@@ -139,7 +139,7 @@ class RefreshLayoutState {
                 } else {
                     refreshingState.updateComponentStatus(ActionComponentStatus.Dragging)
                 }
-                newOffsetY = newOffsetY.coerceAtMost(refreshingState.triggerDistancePx + 20f)
+                newOffsetY = newOffsetY.coerceAtMost(refreshingState.triggerDistancePx + 100f)
             } else if (newOffsetY < 0) {
                 //scroll up
                 if (newOffsetY.absoluteValue >= loadingMoreState.triggerDistancePx && loadingMoreState.hasMoreData) {
@@ -147,7 +147,7 @@ class RefreshLayoutState {
                 } else {
                     loadingMoreState.updateComponentStatus(ActionComponentStatus.Dragging)
                 }
-                newOffsetY = newOffsetY.coerceAtLeast(-loadingMoreState.triggerDistancePx - 20f)
+                newOffsetY = newOffsetY.coerceAtLeast(-loadingMoreState.triggerDistancePx - 100f)
             }
             _offsetY.snapTo(newOffsetY)
         }
