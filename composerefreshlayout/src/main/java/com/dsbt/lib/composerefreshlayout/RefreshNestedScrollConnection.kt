@@ -99,7 +99,7 @@ class RefreshNestedScrollConnection(
     private fun updateMultiplier(dir: Int) {
         // 这里根据滑动距离衰减,可以优化一下这里的算法
         val max = if (dir > 0) state.maxScrollDownPx else state.maxScrollUpPx
-        multiplier = (0.9f - state.offsetY.absoluteValue / max).coerceAtLeast(0f)
+        multiplier = (1f - state.offsetY.absoluteValue / max).coerceAtLeast(0f)
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
