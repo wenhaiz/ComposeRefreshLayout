@@ -217,7 +217,11 @@ class RefreshLayoutState {
      * @param hasMoreData has more data or not
      * @param delay Duration of the result message display
      */
-    suspend fun finishRefresh(success: Boolean, hasMoreData: Boolean = true, delay: Long = 1000) {
+    suspend fun finishRefresh(
+        success: Boolean,
+        hasMoreData: Boolean = true,
+        delay: Long = 1000
+    ) {
         if (refreshingState.componentStatus == ActionComponentStatus.ActionInProgress) {
             refreshingState.updateComponentStatus(
                 if (success) ActionComponentStatus.ActionSuccess else ActionComponentStatus.ActionFailed
@@ -225,8 +229,7 @@ class RefreshLayoutState {
             delay(delay)
             refreshingState.updateComponentStatus(ActionComponentStatus.Resetting)
         }
-        refreshingState.hasMoreData = hasMoreData
-        //FIXME:This may be tricky
+//        refreshingState.hasMoreData = hasMoreData
         loadingMoreState.hasMoreData = hasMoreData
     }
 
