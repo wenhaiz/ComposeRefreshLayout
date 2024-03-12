@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.dsbt.demo.compose.refreshlayout'
+    namespace 'com.wenhaiz.demo.compose.refreshlayout'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.dsbt.demo.compose.refreshlayout"
+        applicationId "com.wenhaiz.demo.compose.refreshlayout"
         minSdk 24
         targetSdk 33
         versionCode 1

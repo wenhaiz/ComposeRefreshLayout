@@ -10,7 +10,7 @@ android {
             withSourcesJar()
         }
     }
-    namespace 'com.dsbt.lib.composerefreshlayout'
+    namespace 'com.wenhaiz.lib.composerefreshlayout'
     compileSdk 33
 
     defaultConfig {

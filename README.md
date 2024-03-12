@@ -39,11 +39,11 @@ dependencies {
 Use it in your Compose content.
 
 ```kotlin
-import com.dsbt.lib.composerefreshlayout.RefreshLayout
-import com.dsbt.lib.composerefreshlayout.RefreshLayoutState
-import com.dsbt.lib.composerefreshlayout.rememberRefreshLayoutState
-import com.dsbt.lib.composerefreshlayout.DefaultRefreshFooter
-import com.dsbt.lib.composerefreshlayout.DefaultRefreshHeader
+import com.wenhaiz.lib.composerefreshlayout.RefreshLayout
+import com.wenhaiz.lib.composerefreshlayout.RefreshLayoutState
+import com.wenhaiz.lib.composerefreshlayout.rememberRefreshLayoutState
+import com.wenhaiz.lib.composerefreshlayout.DefaultRefreshFooter
+import com.wenhaiz.lib.composerefreshlayout.DefaultRefreshHeader
 
 
 val state = rememberRefreshLayoutState()
