@@ -11,7 +11,7 @@ import kotlin.math.absoluteValue
 
 private const val TAG = "RefreshNestedScrollConn"
 
-class RefreshNestedScrollConnection(
+internal class RefreshNestedScrollConnection(
     val state: RefreshLayoutState,
     val coroutineScope: CoroutineScope,
     var enableRefresh: Boolean,

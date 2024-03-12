@@ -3,19 +3,8 @@ package com.dsbt.lib.composerefreshlayout
 import android.util.Log
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -74,8 +63,8 @@ fun RefreshLayout(
     footerPaddingBottom: Dp = Dp.Unspecified,
     content: @Composable BoxScope.(RefreshLayoutState) -> Unit,
 ) {
-    var headerHeight by remember { mutableStateOf(0) }
-    var footerHeight by remember { mutableStateOf(0) }
+    var headerHeight by remember { mutableIntStateOf(0) }
+    var footerHeight by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
     val conn = remember {
         RefreshNestedScrollConnection(
@@ -88,7 +77,7 @@ fun RefreshLayout(
         this.enableRefresh = enableRefresh
         this.enableLoadMore = enableLoadMore
     }
-    LaunchedEffect(state.refreshingState) {
+    LaunchedEffect(state.refreshingState, enableRefresh) {
         snapshotFlow {
             state.refreshingState.componentStatus
         }.collectLatest {
@@ -116,7 +105,7 @@ fun RefreshLayout(
             }
         }
     }
-    LaunchedEffect(state.loadingMoreState) {
+    LaunchedEffect(state.loadingMoreState, enableLoadMore) {
         snapshotFlow {
             state.loadingMoreState.componentStatus
         }.collectLatest {
@@ -201,4 +190,29 @@ fun RefreshLayout(
             footer(state.loadingMoreState)
         }
     }
+}
+
+/**
+ * Only enable refresh.
+ */
+@Composable
+fun PullRefreshLayout(
+    modifier: Modifier = Modifier,
+    state: RefreshLayoutState = rememberRefreshLayoutState(),
+    enableRefresh: Boolean = true,
+    header: @Composable BoxScope.(ActionState.RefreshingState) -> Unit = {
+        DefaultRefreshHeader(state = it)
+    },
+    onRefresh: () -> Unit = {},
+    content: @Composable BoxScope.(RefreshLayoutState) -> Unit
+) {
+    RefreshLayout(
+        modifier = modifier,
+        state = state,
+        content = content,
+        header = header,
+        enableLoadMore = false,
+        enableRefresh = enableRefresh,
+        onRefresh = onRefresh
+    )
 }

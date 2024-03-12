@@ -5,12 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatorMutex
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
@@ -49,7 +44,7 @@ fun rememberRefreshLayoutState(): RefreshLayoutState {
     return remember { RefreshLayoutState() }
 }
 
-sealed class ActionState constructor(
+sealed class ActionState(
     private val _offsetY: State<Float>,
 ) {
     var componentStatus: ActionComponentStatus by mutableStateOf(ActionComponentStatus.IDLE)
@@ -171,17 +166,6 @@ class RefreshLayoutState {
         }
     }
 
-
-    data class RefreshResult(
-        val success: Boolean,
-        val hasMoreData: Boolean = true,
-        val delayToSettling: Long = 1000
-    )
-
-    suspend fun finishRefresh(result: RefreshResult) {
-        finishRefresh(result.success, result.hasMoreData, result.delayToSettling)
-    }
-
     /**
      * Finish load more
      *
@@ -198,16 +182,6 @@ class RefreshLayoutState {
             loadingMoreState.updateComponentStatus(ActionComponentStatus.Resetting)
         }
         loadingMoreState.hasMoreData = hasMoreData
-    }
-
-    data class LoadMoreResult(
-        val success: Boolean,
-        val hasMoreData: Boolean,
-        val delayToSettling: Long = 1000
-    )
-
-    suspend fun finishLoadMore(result: LoadMoreResult) {
-        finishLoadMore(result.success, result.hasMoreData, result.delayToSettling)
     }
 
     /**
